@@ -208,7 +208,7 @@ Config: `mastercamExe`, `assets` (absolute paths to the MCAM template and the po
 | `nc_read` | `{ job_id, run_id, from_line?, count?: ≤400 }` | `{ total_lines, lines[] }` |
 | `nc_diff` | `{ job_id, run_a, run_b }` | a unified diff, truncated |
 
-**Bridge (rewritten).** Mastercam 2026 runs interactively (it can't run headless). `capp-cam` connects from Node to Mastercam's own named pipe (`MastercamPipe<pid>`) and sends C# scripts rendered from templates in `bridge/mastercam/`. The scripts open a copy of the template MCAM, write operation parameters, regenerate toolpaths and post with the configured post-processor. They write per-step results into the run directory, and `capp-cam` turns those into `status.json` and `program.nc`. A C++ CHook is added only if spike S-MC shows the C# API can't do a step (spec §8). Single run at a time, no resume. The CAPPtron C++ CHook task (`m_main`) and the C#/UIA simulation scripts are a *reference* for which SDK calls work. They are not copied. Simulation is optional and is the last step to be built.
+**Bridge (rewritten).** Mastercam 2026 runs interactively (it can't run headless). `capp-cam` connects from Node to Mastercam's own named pipe (`MastercamPipe<pid>`) and sends C# scripts rendered from templates in `bridge/mastercam/`. The scripts open a copy of the template MCAM, write operation parameters, regenerate toolpaths and post with the configured post-processor. Spike S-MC showed .NET cannot reach lathe operation parameters, so parameter writes and regeneration go through a small C++ CHook invoked from the scripts via `RunCHook`; posting and file handling stay in C# (`bridge/mastercam/README.md`). They write per-step results into the run directory, and `capp-cam` turns those into `status.json` and `program.nc`. Single run at a time, no resume. The CAPPtron C++ CHook task (`m_main`) and the C#/UIA simulation scripts are a *reference* for which SDK calls work. They are not copied. Simulation is optional and is the last step to be built.
 
 ### 7.4 `capp-workbench`
 
@@ -268,6 +268,6 @@ The results go to `docs/experiments/planning-modes-<date>.md`. A mode-B plan tha
 
 ## 11. Open items
 
-- Whether C# scripts over the pipe cover set-params, regen and post, or a C++ CHook is needed. Decided by spike S-MC, which runs right after M0 (spec §7).
+- Whether C# scripts over the pipe cover set-params, regen and post, or a C++ CHook is needed — decided by spike S-MC: C# covers count/open/post but lathe parameters need the C++ CHook (`bridge/mastercam/README.md`, `docs/acceptance/G-MC.md`).
 - How NX is invoked in batch mode — decided by spike S-NX: `run_journal.exe` runs a rendered journal; see `packages/capp-step/README.md` and `docs/acceptance/G-NX.md`.
 - Plugin license: MIT is assumed, to match DSH Desktop.

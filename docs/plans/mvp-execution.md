@@ -30,7 +30,7 @@ S0 ──► S-MC ────────────────────�
 
 Gates are always **[W]**. If the executing agent has no Windows access, it finishes the [any] tasks, writes the gate script, opens the PR as *gate not run*, and hands the gate to the human. It does not mark the step done.
 
-Inside a gate, steps that need the agent run it through `scripts/dsh-cli.cmd` on the Windows machine ([development](../development.md#harness-from-the-command-line)); only the steps that need the panel — including both human approvals — stay in the DSH Desktop UI (spec §6.5).
+Inside a gate, steps that need the agent run it through `scripts/dsh-cli.cmd` on the Windows machine ([development](../development.md#harness-from-the-command-line)); only the steps that need the panel — including both human approvals — stay in the DSH Desktop UI (spec §6.5). Agent-driven steps may use the CLI, but the S-PERM permission check and the full G6 run must execute in a real DSH Desktop session: the headless profile has no `connection` service and a different plugin set, so its results are not equivalent.
 
 ### 0.3 Inputs to collect once, before S0 [H]
 
@@ -130,6 +130,7 @@ The workbench additionally declares `dsh.client` (`platform: "web"`, `inject: ["
   ```
 
   `id` must equal the npm name. The bundle's `require('react')` resolves through the loader's `require`, so React is never bundled (spec §1.1).
+- `capp-common`'s `CAPP_VERSION` is injected, not literal: `src/index.ts` declares `__CAPP_VERSION__`, and every esbuild call gets `define: { __CAPP_VERSION__: <the building package's version> }`, so a bundle reports the version of the package that bundled it.
 - Copy `skills/` into place as is. No build step for skills.
 - The root scripts are: `typecheck` = `tsc -b` (project references, `noEmit`); `test` = `vitest run`; `build` = `node scripts/build.mjs`; `pack` = `node scripts/pack.mjs`. `scripts/check.mjs` calls these four by name ([development](../development.md)).
 
@@ -164,7 +165,7 @@ Each package lists: **Goal · Depends on · Files · Tasks · Unit tests · Gate
 **Depends on.** §0.3 inputs 1–2.
 
 **Files.**
-`package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `tsconfig.base.json`, `tsconfig.json` (references), `vitest.config.ts`, `scripts/build.mjs`, `scripts/pack.mjs`, `packages/capp-common/{package.json,tsconfig.json,src/index.ts}` (with `export const CAPP_VERSION = '0.0.1'` only), `packages/capp-workbench/{package.json,tsconfig.json,cordis.patch.yml,README.md,LICENSE,src/index.ts,src/client/index.tsx}`, `docs/acceptance/G0.md`.
+`package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `tsconfig.base.json`, `tsconfig.json` (references), `vitest.config.ts`, `scripts/build.mjs`, `scripts/pack.mjs`, `packages/capp-common/{package.json,tsconfig.json,src/index.ts}` (`src/index.ts` exports only `CAPP_VERSION`, a build-time constant), `packages/capp-workbench/{package.json,tsconfig.json,cordis.patch.yml,README.md,LICENSE,src/index.ts,src/client/index.tsx}`, `docs/acceptance/G0.md`.
 
 **Tasks.**
 1. [any] Root workspace: set `packageManager: "pnpm@10.34.5"` and `engines.node: ">=22"`, and add the four root scripts from §2.3. Lock with `pnpm install`.
@@ -481,7 +482,7 @@ Also `fixtures/nx-report.synthetic.json` and `fixtures/analysis.synthetic.json`:
    - The **Approve rN** button is shown only on the latest revision and asks for confirmation.
    - The layout responds to the container width (workbench standard §4): the table scrolls horizontally inside its own box.
    - With no job, the panel shows "No CAPP jobs yet — start a session and drop a STEP file", with no automatic session creation (workbench standard §6).
-5. [any] Embed the host `conversation` node (custom frame, workbench standard §4.1). The business view comes first; the conversation is on demand.
+5. [any] Embed the host `conversation` node (custom frame, workbench standard §4.1). The business view comes first; the conversation is on demand. This needs `@deepseek-ai/dsh-client-ui-conversation` added to `dsh.client.inject` — not needed for S0.
 6. [any] Write `docs/acceptance/G4.md`. [W] Run it.
 
 **Unit tests.** Approve handler: a matching revision writes the approval with the right sha; a stale revision gives 409. The NC-review handler waits for S5.
@@ -490,7 +491,7 @@ Also `fixtures/nx-report.synthetic.json` and `fixtures/analysis.synthetic.json`:
 1. Open the CAPP panel → the G3 job is listed, and the Part and Process card tabs show r2.
 2. Click Approve r2 and confirm → the badge reads "approved r2", and `plan_show` in the session says the same.
 3. Ask the agent to revise again → r3; the panel badge shows "approval is for r2"; the Approve button now offers r3.
-4. Narrow the window and collapse and expand the sidebar → no clipped controls or page-wide horizontal scroll.
+4. Narrow the window and collapse and expand the sidebar → no clipped controls or page-wide horizontal scroll. The workbench toolbar is verified with the sidebar expanded and collapsed — the check deferred from G0.
 
 **Out of scope.** CAM and NC.
 

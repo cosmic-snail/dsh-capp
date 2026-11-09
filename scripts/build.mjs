@@ -1,6 +1,7 @@
 // esbuild pipeline for plugin packages: src/index.ts → lib/index.js (node ESM),
 // src/client/index.tsx → lib/client.js wrapped for the Harness module loader.
-// capp-common is bundled into each plugin, never built itself. Usage: node scripts/build.mjs
+// capp-common is bundled into each plugin, never built itself; its CAPP_VERSION is
+// injected from the building package's version. Usage: node scripts/build.mjs
 
 import { build } from 'esbuild'
 import { existsSync } from 'node:fs'
@@ -17,22 +18,25 @@ async function pluginPackages() {
   for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
     if (!entry.isDirectory()) continue
     const dir = join(PACKAGES, entry.name)
-    if (!existsSync(join(dir, 'src', 'index.ts'))) continue
     const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
-    if (pkg.name === 'capp-common') continue
-    plugins.push({ dir, name: pkg.name })
+    // Private packages (capp-common) are bundled into plugins, never built on their own.
+    if (pkg.private) continue
+    plugins.push({ dir, name: pkg.name, version: pkg.version })
   }
   return plugins
 }
 
-function print (path) {
+function print(path) {
   console.log(relative(ROOT, path))
 }
 
-for (const { dir, name } of await pluginPackages()) {
+for (const { dir, name, version } of await pluginPackages()) {
   const lib = join(dir, 'lib')
   await rm(lib, { recursive: true, force: true })
   await mkdir(lib, { recursive: true })
+
+  // Substitute capp-common's __CAPP_VERSION__ so each bundle reports its own package version.
+  const define = { __CAPP_VERSION__: JSON.stringify(version) }
 
   const serverOut = join(lib, 'index.js')
   await build({
@@ -43,6 +47,7 @@ for (const { dir, name } of await pluginPackages()) {
     target: 'es2023',
     bundle: true,
     external: ['@deepseek-ai/*', 'node:*'],
+    define,
     logLevel: 'warning',
   })
   print(serverOut)
@@ -58,6 +63,7 @@ for (const { dir, name } of await pluginPackages()) {
       external: ['react', '@deepseek-ai/*'],
       jsx: 'transform',
       jsxFactory: 'React.createElement',
+      define,
       write: false,
       logLevel: 'warning',
     })

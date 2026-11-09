@@ -1,5 +1,6 @@
-// Pack every plugin package into dist/*.tgz and print each archive's sha256.
-// capp-common is private and bundled, so it is never packed. Usage: node scripts/pack.mjs
+// Pack every non-private package under packages/ into dist/*.tgz and print each archive's
+// sha256. Private packages (capp-common) are bundled into plugins, never packed.
+// Usage: node scripts/pack.mjs
 
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -19,7 +20,7 @@ async function pluginPackages() {
     if (!entry.isDirectory()) continue
     const dir = join(PACKAGES, entry.name)
     const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
-    if (pkg.name === 'capp-common') continue
+    if (pkg.private) continue
     plugins.push({ dir, name: pkg.name, version: pkg.version })
   }
   return plugins

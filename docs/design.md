@@ -1,6 +1,6 @@
 # DSH-CAPP: intent and MVP design
 
-Status: draft v0 · 2026-11-08 · Owner: cosmic-snail
+Status: draft v0 · 2026-11-08 · Owner: cosmic-snail · Engineering detail: [spec.md](spec.md)
 
 ## 1. Intent
 
@@ -54,13 +54,13 @@ The repository is a pnpm workspace. Each plugin is packed to a `.tgz` and instal
 ```text
 dsh-capp/
   packages/
-    capp-schemas/     plain package: JSON Schemas + TS types for the file formats (§6)
+    capp-common/      plain package bundled into each plugin: JSON Schemas, types, job store (§6)
     capp-step/        plugin: STEP → part.json via NX
-    capp-planning/    plugin: templates, plan create/revise/validate, approval endpoint
+    capp-planning/    plugin: templates, plan create/revise/validate
     capp-cam/         plugin: Mastercam runs → NC
-    capp-workbench/   plugin: business panel (process card, NC view, approve buttons)
+    capp-workbench/   plugin: business panel + /api/capp endpoints (the only approval writer)
   bridge/
-    mastercam/        Windows-only Mastercam SDK add-in (rewritten; see §7.3)
+    mastercam/        C# script templates sent to Mastercam over its named pipe (rewritten; see §7.3)
   assets/
     manifest.example.json   names + sha256 of external assets; real files live outside git
   docs/
@@ -194,12 +194,11 @@ Config: `templatesDir` (absolute; holds the private template files).
 - `base_revision` must match the latest revision. That keeps the agent from editing a stale plan, and it is the only concurrency control.
 - `error`-level issues come only from the three hard checks in §2. Everything else is `warn`.
 
-Panel endpoints: `GET /api/capp/jobs`, `GET /api/capp/jobs/:id`, `POST /api/capp/jobs/:id/approve { revision }`, `POST /api/capp/jobs/:id/nc-review { run, decision, note }`.
 Skills: `plan-torus-template` (mode A) and `plan-freeform` (mode B: how to reason from features to operations, with the torus template as a worked example).
 
 ### 7.3 `capp-cam`
 
-Config: `mastercamExe`, `bridgeDll` (path to the built add-in), `assets` (absolute paths to the MCAM template and the post), `workDir`.
+Config: `mastercamExe`, `assets` (absolute paths to the MCAM template and the post), `workDir`, `stepTimeoutMs`.
 
 | Tool | Input | Output |
 |---|---|---|
@@ -209,7 +208,7 @@ Config: `mastercamExe`, `bridgeDll` (path to the built add-in), `assets` (absolu
 | `nc_read` | `{ job_id, run_id, from_line?, count?: ≤400 }` | `{ total_lines, lines[] }` |
 | `nc_diff` | `{ job_id, run_a, run_b }` | a unified diff, truncated |
 
-**Bridge (rewritten).** This is a Mastercam 2026 SDK add-in running inside an interactive Mastercam session (Mastercam can't run headless). It reads `request.json`, opens the template MCAM, writes operation parameters, regenerates toolpaths, posts with the configured post-processor, and writes `status.json` and `program.nc`. `capp-cam` starts the run, the bridge does the work, and the two share only the run directory. Single run at a time, no resume. The CAPPtron C++ CHook task (`m_main`) and the C#/UIA simulation scripts are a *reference* for which SDK calls work. They are not copied. Simulation is optional and is the last step to be built.
+**Bridge (rewritten).** Mastercam 2026 runs interactively (it can't run headless). `capp-cam` connects from Node to Mastercam's own named pipe (`MastercamPipe<pid>`) and sends C# scripts rendered from templates in `bridge/mastercam/`. The scripts open a copy of the template MCAM, write operation parameters, regenerate toolpaths and post with the configured post-processor. They write per-step results into the run directory, and `capp-cam` turns those into `status.json` and `program.nc`. A C++ CHook is added only if spike S-MC shows the C# API can't do a step (spec §8). Single run at a time, no resume. The CAPPtron C++ CHook task (`m_main`) and the C#/UIA simulation scripts are a *reference* for which SDK calls work. They are not copied. Simulation is optional and is the last step to be built.
 
 ### 7.4 `capp-workbench`
 
@@ -218,7 +217,7 @@ This is a client panel (`customFrame: true`, business-first) with three tabs:
 - **Process card:** the operations table of the current revision, a revision picker, and the **Approve** button.
 - **NC:** the run list, the NC viewer, and the **Approve NC / Reject** buttons.
 
-It reads and writes only through the `/api/capp` endpoints. The host's native `conversation` node is embedded for AI help.
+Its server half owns the `/api/capp` endpoints (`GET /jobs`, `GET /jobs/:id`, `POST /jobs/:id/approve`, `POST /jobs/:id/nc-review`; see spec §4.5). These are the only writers of `approval.json` and `nc-review.json`. The host's native `conversation` node is embedded for AI help.
 
 ## 8. Open-source boundary
 
@@ -259,7 +258,7 @@ The results go to `docs/experiments/planning-modes-<date>.md`. A mode-B plan tha
 
 | # | Deliverable | Done when |
 |---|---|---|
-| M0 | Repo, pnpm workspace, empty `capp-workbench` and `capp-schemas`, Windows dev setup notes | The panel loads in the forked DSH on the Windows machine; the asset manifest resolves locally |
+| M0 | Repo, pnpm workspace, empty `capp-workbench` and `capp-common`, Windows dev setup notes | The panel loads in the forked DSH on the Windows machine; the asset manifest resolves locally |
 | M1 | `capp-step` | The torus STEP gives a `part.json` with the expected features, called by the agent in a session |
 | M2 | `capp-planning` mode A + the process-card tab + Approve | The agent creates the 7-op plan, revises rough_step 0.5 → 0.4 on request, and the user approves in the panel |
 | M3 | Mastercam bridge + `capp-cam` (regen + post) | The approved plan yields `program.nc` for both rough_step values; the NC tab shows it |
@@ -269,6 +268,6 @@ The results go to `docs/experiments/planning-modes-<date>.md`. A mode-B plan tha
 
 ## 11. Open items
 
-- The bridge language and SDK entry form (C++ CHook versus .NET add-in). Decide in M3 after reading the reference bridge.
-- How NX is invoked in batch mode (`run_journal` versus the NX Python the scripts expect). Confirm in M1.
+- Whether C# scripts over the pipe cover set-params, regen and post, or a C++ CHook is needed. Decided by spike S-MC, which runs right after M0 (spec §7).
+- How NX is invoked in batch mode (`run_journal` versus the NX Python the scripts expect). Decided by spike S-NX.
 - Plugin license: MIT is assumed, to match DSH Desktop.

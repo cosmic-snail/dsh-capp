@@ -1,0 +1,9 @@
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Never diffed or merged as text if one slips past .gitignore.
+*.tgz binary
+*.png binary

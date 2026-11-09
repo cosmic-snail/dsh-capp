@@ -1,0 +1,8 @@
+#!/bin/sh
+# Installed by `node scripts/check.mjs install-hooks` (sets core.hooksPath=.githooks).
+# Runs the staged copy of the checker against the staged tree. See docs/development.md.
+if ! command -v node >/dev/null 2>&1; then
+  echo "pre-commit: node (22 LTS) is required for the repo checks" >&2
+  exit 1
+fi
+git show :scripts/check-staged.mjs | node --input-type=module -

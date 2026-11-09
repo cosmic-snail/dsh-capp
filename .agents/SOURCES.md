@@ -1,0 +1,7 @@
+# Where the development skills come from
+
+The three maintenance skills, the decision-note template and the notes rules are adapted from [WncFht/agent-maintenance](https://github.com/WncFht/agent-maintenance/tree/20bb1e5b0cca68ca64c79451c19a0130f6281bb0) at commit `20bb1e5b0cca68ca64c79451c19a0130f6281bb0`, by way of the Chinese adaptation in CAPPtron-core. The upstream files are `.agents/skills/maintain-docs/SKILL.md`, `maintain-prose/SKILL.md`, `maintain-decision-notes/SKILL.md`, `.agents/references/documentation.md` and `decision-notes.md`. Upstream is **Copyright (c) 2026 DeepSeek**, MIT licensed; the [full license](licenses/agent-maintenance-MIT.txt) is kept verbatim. It applies to the borrowed material and doesn't change the license of the rest of this repo.
+
+`run-gates` is new for this repo. It takes the shape of CAPPtron-core's test workflow skill and swaps in the spec's gates.
+
+What changed for dsh-capp: English text; the doc owners are design/spec/status/acceptance/experiments instead of CAPPtron's plans/specs/validation; the checks are zero-dependency Node scripts instead of uv and Python; evidence is bound to spec §7 gates on one Windows machine. Kept: one owner per fact, meaning-preserving edits, lasting rationale with real alternatives. Left out, as in CAPPtron-core: archive freezing, global installs, skill-count checks and process logs. Also left out: CAPPtron-core's exact JUnit test-count gates and self-hosted runner setup, which conflict with spec §6.4 and a public repo.

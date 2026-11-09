@@ -1,0 +1,33 @@
+# Private / vendor assets: never commit (see docs/assets.md)
+assets/*
+!assets/manifest.example.json
+*.step
+*.stp
+*.STEP
+*.STP
+*.mcam
+*.pst
+*.psb
+*.nc
+*.NC
+*.nci
+*.prt
+# Secrets and local config
+.env
+.env.*
+*.rclone.conf
+rclone.conf
+local.config.json
+# Run output
+capp-jobs/
+logs/
+*.log
+# Build
+node_modules/
+dist/
+*.tgz
+bridge/**/bin/
+bridge/**/obj/
+bridge/**/x64/
+.vs/
+.DS_Store

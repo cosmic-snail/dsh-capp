@@ -1,0 +1,13 @@
+{
+  "schema": "capp.assets/v0",
+  "drive_folder": "CAPPtron / golden-b7 / 20261023",
+  "note": "Logical ids only. Real files are synced from the private Drive folder to a local directory outside this repo; plugin configs point to absolute paths there.",
+  "assets": [
+    { "id": "torus-step",        "file": "<ring>.step",   "sha256": "<fill from Drive manifest>" },
+    { "id": "torus-mcam",        "file": "<ring>.mcam",   "sha256": "7c279238996e717f43dc20ff69f055edae75cad281344f636805bb03c3956804" },
+    { "id": "torus-template",    "file": "golden-b7.template.json", "sha256": "<fill>" },
+    { "id": "mill-turn-post",    "file": "<post>.pst",    "sha256": "<fill>" },
+    { "id": "nx-extractor",      "file": "nx2306_general_process_planning_input_extractor_v7.py", "sha256": "1d78b141901b921d4b2930e389968c784cc29943e96ac546eaaf31bbac31a8f7" },
+    { "id": "nx-analyzer",       "file": "deterministic_geometry_manufacturing_analyzer.py",      "sha256": "d79335739bf30af5edec70ea7f6489c8b5cdf0ae0377a2d48067c0f2fbbe28c7" }
+  ]
+}

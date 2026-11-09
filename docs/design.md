@@ -269,5 +269,5 @@ The results go to `docs/experiments/planning-modes-<date>.md`. A mode-B plan tha
 ## 11. Open items
 
 - Whether C# scripts over the pipe cover set-params, regen and post, or a C++ CHook is needed. Decided by spike S-MC, which runs right after M0 (spec §7).
-- How NX is invoked in batch mode (`run_journal` versus the NX Python the scripts expect). Decided by spike S-NX.
+- How NX is invoked in batch mode — decided by spike S-NX: `run_journal.exe` runs a rendered journal; see `packages/capp-step/README.md` and `docs/acceptance/G-NX.md`.
 - Plugin license: MIT is assumed, to match DSH Desktop.

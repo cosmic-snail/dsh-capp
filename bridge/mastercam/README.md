@@ -34,7 +34,7 @@ Protocol (verified):
 
 The eight parameters the workflow edits — `feed`, `rpm`, `clearance`, `retract`, `depth`, `rough_step`, `stock_x`, `stock_z` — are unreachable from C# on this part:
 
-- `Mastercam.Operations.*` contains **only milling operation classes** (Pocket, CircleMill, Contour, Drill, …). No lathe/turning classes exist in any namespace (`OperationType` lists `LatheRouging`, `LatheFinishing`, … as enum values only).
+- `Mastercam.Operations.*` contains **only milling operation classes** (Pocket, CircleMill, Contour, Drill, …) in the scanned `OperationsManager` assembly; no lathe/turning classes exist there (`OperationType` lists `LatheRouging` (sic, vendor spelling), `LatheFinishing`, … as enum values only).
 - `Mastercam.Database.Operation` is the type-agnostic entity (`FeedRate`, `SpindleSpeed`, `RetractRate`, `Linking` → `LinkingParams` with `Clearance`/`Retract`/`Depth`/`FeedPlane`/`TopStock`, `MiscValues` → 10 reals + 10 ints, `Commit()`, `Regenerate()`, `Post()`). **But no accessor returns one for a lathe op**: `SearchManager.GetOperation(id)`, `SearchManager.GetOperations()` (all overloads incl. group id and every `Lathe*` type), and `Typecaster.OperationCaster(id)` all returned null/empty on the Golden-B7 file (`probes/probe-access.csx`).
 - `Mastercam.Support.OpManagerSettings` exposes only Dirty/Ghosted/Locked/Selected/Visible flags — no parameters.
 
@@ -49,7 +49,7 @@ Conclusion: parameter read/write and regeneration for lathe ops go through the *
 ## Files
 
 - `probes/pipe-probe.mjs` — dependency-free pipe client (Node ≥ 18).
-- `probes/count-ops.csx`, `list-ops.csx`, `dump-op.csx`, `probe-access.csx` — read-only probes.
+- `probes/count-ops.csx`, `list-ops.csx`, `dump-op.csx`, `probe-access.csx` — read-only probes (`list-ops`/`dump-op`/`probe-access` confirmed the .NET accessors return empty for lathe ops; kept as the recorded evidence).
 - `probes/open-file.csx`, `post.csx` — verified working probes.
 - .csx files contain `{{NAME}}` placeholders rendered by `pipe-probe.mjs --set NAME=VALUE`.
 

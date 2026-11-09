@@ -391,7 +391,7 @@ Rules for every step:
 | ID | Question | Decided in |
 |---|---|---|
 | S-MC | C# scripts over the pipe are enough for set-params, regen and post, or a C++ CHook is needed | S-MC |
-| S-NX | `run_journal.exe` vs NX's Python launcher; NX environment variables | S-NX |
+| S-NX | **Decided:** `run_journal.exe <journal.py>` is the batch entry; it needs `UGII_BASE_DIR`, `UGII_LANG`, `SPLM_LICENSE_SERVER` (system env on the Windows machine); `UGS_LICENSE_BUNDLE` not required. Verdict and command line: `packages/capp-step/README.md`, G-NX | S-NX |
 | S-JOBS | Use the host `jobs` service (`@deepseek-ai/dsh-jobs`) for CAM runs instead of our runner | During S5, only if it simplifies; the default is our runner |
 | S-WS | Can the client get the current session workspace from host APIs? If yes, the panel filters jobs by workspace; if no, the global index stays | S4 |
 | S-PERM | Do NX and Mastercam subprocesses need sandbox escalation (`approveEscalation`) under the session's permission mode? | S2 |

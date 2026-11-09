@@ -12,8 +12,8 @@ Contents: §1 tech stack and environment · §2 architecture · §3 directory to
 
 | Item | Locked value | Notes |
 |---|---|---|
-| Host app | Forked `dsh-desktop` (our fork) | No CAPP code in the fork. Host changes only for bugs we can't work around, recorded in `docs/host-patches.md` |
-| Harness packages | `@deepseek-ai/dsh-*` **0.2.2-alpha.2** (exact) | Matches the fork's lockfile. A host upgrade is a separate, explicit task |
+| Host app | DSH Desktop from [dataelement/dsh-desktop](https://github.com/dataelement/dsh-desktop), official release **v0.13.2**, unchanged | No CAPP code in the host. A host change only for a bug we can't work around: it goes into a fork of dataelement/dsh-desktop and is recorded in `docs/host-patches.md` |
+| Harness packages | `@deepseek-ai/dsh-*` **0.2.2-alpha.2** (exact) | Matches the v0.13.2 lockfile. A host upgrade is a separate, explicit task |
 | Cordis | `@deepseek-ai/cordis` **4.0.6-alpha.1** | Peer dependency only |
 | Schemastery | `@deepseek-ai/schemastery` **3.18.6-alpha.1** | Plugin `Config` schemas only |
 | Plugin runtime | Electron **44.7.0** in Node mode (`ELECTRON_RUN_AS_NODE=1`) | We never ship our own Node. **No native addons** in plugins |
@@ -25,7 +25,7 @@ Contents: §1 tech stack and environment · §2 architecture · §3 directory to
 |---|---|
 | Language | TypeScript **5.9.3**, `strict`, `noUncheckedIndexedAccess`, ESM, target ES2023 |
 | Bundler | esbuild **0.25.12**: server → one ESM file per plugin; client → one IIFE file wrapped in `window.__ModuleLoader__.load` |
-| Package manager | pnpm **10.34.5** workspace (the `dsh-capp` repo only; the fork keeps npm) |
+| Package manager | pnpm **10.34.5** workspace (the `dsh-capp` repo only; dsh-desktop keeps npm) |
 | Dev Node (build, test, and lint) | Node 22 LTS, **22.13** or newer |
 | Tests | vitest **4.x**, for pure modules only |
 | JSON validation | ajv **8.x** (draft 2020-12), bundled into each plugin |
@@ -36,7 +36,7 @@ Contents: §1 tech stack and environment · §2 architecture · §3 directory to
 ### 1.3 Target machine (acceptance environment)
 
 There is exactly one supported environment: **Windows 11 x64**, an interactive desktop session, one user. On that machine:
-- **DSH Desktop** (fork build, Windows x64 installer or dev build).
+- **DSH Desktop** v0.13.2, the official Windows x64 installer from the dataelement/dsh-desktop release.
 - **Siemens NX 2306** (the version the external extractor targets). It is invoked in batch mode; how exactly is confirmed in spike S-NX.
 - **Mastercam 2026** (SDK `C_H_VERSION 2800`), running interactively with the user signed in. The Chinese UI is the only tested UI language.
 - **External assets** from the private Drive folder, synced to a local directory outside the repo (see [assets.md](assets.md)).
@@ -53,7 +53,7 @@ The plugins **never call an LLM**. The Harness agent, configured in DSH settings
 ## 2. Architecture
 
 ```text
-┌──────────────────────────── DSH Desktop (fork, unchanged) ────────────────────────────┐
+┌─────────────────────────── DSH Desktop v0.13.2 (unchanged) ───────────────────────────┐
 │ Harness agent loop · sessions · workspaces · model providers · Plugin Manager        │
 │                                                                                     │
 │  Cordis bus (ctx): tools · skills · systemPrompt · connection.fetch · subprocess     │
@@ -262,7 +262,7 @@ POST /api/capp/nc-review?id=        { run, decision, note } → NcReview
 register({ title: 'CAPP', customFrame: true, headerLayout: 'compact' }, CappPanel)   // tabs: Part · Process card · NC
 ```
 
-`connection.fetch.register` matches the exact pathname only (Harness 0.2.2-alpha.2, `@deepseek-ai/dsh-client-connection`), so a path segment such as `:id` is literal text, not a parameter. The `/api/capp/` prefix follows workbench standard §3.4 (endpoints under the workbench's own prefix). The panel polls `GET /api/capp/job?id=` every 2 s while a CAM run is `running`. No websockets.
+`connection.fetch.register` matches the exact pathname only (Harness 0.2.2-alpha.2, `@deepseek-ai/dsh-client-connection`), so a path segment such as `:id` is literal text, not a parameter. The `/api/capp/` prefix follows workbench standard §3.4 (endpoints under the workbench's own prefix). The host's own workbench plugin uses the same shape (`/api/desktop-workbenches/state`, `/api/desktop-workbenches/market-install`); the dot style of `dsh-image-generation` (`/api/image-generation.preview`) is a capability plugin's choice, not a rule the standard sets for workbenches. The panel polls `GET /api/capp/job?id=` every 2 s while a CAM run is `running`. No websockets.
 
 ---
 

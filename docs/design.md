@@ -45,11 +45,11 @@ A DSH plugin is an npm package with a `cordis.patch.yml`, a server entry (`apply
 | `ctx.subprocess` / `ctx.sandbox` / `ctx.sandboxPolicy` | Running NX and the Mastercam bridge, and resolving the session workspace |
 | `ctx.desktopWorkbenches.register(...)` (client) | The CAPP business panel |
 
-Reference implementations in the forked host: `packages/dsh-image-generation`, `packages/dsh-desktop-office`, and `docs/workbench-standard.*.md`.
+Reference implementations in the host repo (dataelement/dsh-desktop): `packages/dsh-image-generation`, `packages/dsh-desktop-office`, and `docs/workbench-standard.*.md`.
 
 ## 4. Packages
 
-The repository is a pnpm workspace. Each plugin is packed to a `.tgz` and installed into the forked DSH Desktop with the local-install flow. The host fork (`dsh-desktop`) carries no CAPP code.
+The repository is a pnpm workspace. Each plugin is packed to a `.tgz` and installed into DSH Desktop with the local-install flow. The host (`dsh-desktop`) carries no CAPP code.
 
 ```text
 dsh-capp/
@@ -258,7 +258,7 @@ The results go to `docs/experiments/planning-modes-<date>.md`. A mode-B plan tha
 
 | # | Deliverable | Done when |
 |---|---|---|
-| M0 | Repo, pnpm workspace, empty `capp-workbench` and `capp-common`, Windows dev setup notes | The panel loads in the forked DSH on the Windows machine; the asset manifest resolves locally |
+| M0 | Repo, pnpm workspace, empty `capp-workbench` and `capp-common`, Windows dev setup notes | The panel loads in DSH Desktop on the Windows machine; the asset manifest resolves locally |
 | M1 | `capp-step` | The torus STEP gives a `part.json` with the expected features, called by the agent in a session |
 | M2 | `capp-planning` mode A + the process-card tab + Approve | The agent creates the 7-op plan, revises rough_step 0.5 → 0.4 on request, and the user approves in the panel |
 | M3 | Mastercam bridge + `capp-cam` (regen + post) | The approved plan yields `program.nc` for both rough_step values; the NC tab shows it |

@@ -25,7 +25,7 @@ S0 ──► S-MC ────────────────────�
 | Marker | Meaning |
 |---|---|
 | **[any]** | Can be done on any machine with Node 22 and pnpm (macOS, Linux, cloud). Typecheck and unit tests run here |
-| **[W]** | Needs the Windows machine: the forked DSH Desktop, plus NX and/or Mastercam and the private assets synced locally |
+| **[W]** | Needs the Windows machine: the DSH Desktop release named in spec §1.1, plus NX and/or Mastercam and the private assets synced locally |
 | **[H]** | Needs a human decision or action. The agent prepares it, states it in one message, and waits |
 
 Gates are always **[W]**. If the executing agent has no Windows access, it finishes the [any] tasks, writes the gate script, opens the PR as *gate not run*, and hands the gate to the human. It does not mark the step done.
@@ -35,7 +35,7 @@ Gates are always **[W]**. If the executing agent has no Windows access, it finis
 Ask for these in one message at the start, not per step:
 
 1. **Windows access.** Will the agent run on the Windows machine (or have a shell there), or will a human run the gates?
-2. **Forked DSH Desktop** installed on the Windows machine, with its version or commit. Does a Harness session expose `install_local_workbench`? (Workbench standard §3.6.)
+2. **DSH Desktop** installed on the Windows machine, with its version. Does a Harness session expose `install_local_workbench`? (Workbench standard §3.6.)
 3. **Assets synced** to a local directory outside the repo, per [assets](../assets.md): the logical ids `torus-step`, `torus-mcam`, `torus-template`, `mill-turn-post`, `nx-extractor` and `nx-analyzer`, plus the NX STEP import settings file (`step214ug.def` or its equivalent, a new id `nx-step-settings`). Ask the user to fill in the missing sha256 values in their local manifest.
 4. **Installed versions:** NX 2306 and Mastercam 2026, with their install directories. These go into local plugin config only, never into git.
 5. **Model:** which model the DSH agent uses for the gate runs. It's recorded in gate records and the experiment.
@@ -61,9 +61,9 @@ Stop and ask the user, with the evidence, when:
 
 ## 1. Host facts the plan relies on
 
-These were read from the forked host at Harness `0.2.2-alpha.2`. The S0 executor confirms them on the real host. Any that turn out wrong are fixed in the S0 PR, here and in the spec.
+These were read from the dataelement/dsh-desktop source at Harness `0.2.2-alpha.2`. The S0 executor confirms them on the real host. Any that turn out wrong are fixed in the S0 PR, here and in the spec.
 
-| Fact | Source in the fork |
+| Fact | Source in dsh-desktop |
 |---|---|
 | A tool is `defineTool({ name, description, parameters, output: { schema, render }, timeoutMs, isConcurrencySafe, presentCall, execute(args, exec) })`. `parameters` is a flat map `{ name: { type, required?, description?, enum?, items? } }`. `exec` carries `agent` (with `session.header.cwd`), `signal` and `callId` | `packages/dsh-image-generation/index.js`, `packages/dsh-desktop-workbenches/local-install-tool.mjs` |
 | Tools register with `ctx.tools.register(tool)`. The server entry exports `name`, `inject: string[]`, `Config` (Schemastery) and `apply(ctx, config)` | same |

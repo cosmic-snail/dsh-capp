@@ -11,7 +11,7 @@ These rules extend the [root agent rules](../AGENTS.md). Each fact has one owner
 | [assets.md](assets.md) | Where private assets live and how a developer wires them up |
 | [development.md](development.md) | Local checks, the git hook, CI and what each proves |
 | [plans/](plans/mvp-execution.md) | How spec §7 steps are executed: work packages, tasks, gate outlines. Never overrides the spec or design |
-| `host-patches.md` | Unavoidable changes to the forked host (create it with the first patch) |
+| `host-patches.md` | Unavoidable changes to the host; they go into a fork of dataelement/dsh-desktop (create the page with the first patch) |
 | [acceptance/](acceptance/README.md) | One gate script per gate, with dated run records |
 | `experiments/` | Dated experiment reports, such as the mode A/B planning runs |
 | [.agents/notes/](../.agents/notes/README.md) | Lasting decision rationale that the spec and code don't explain |

@@ -1,6 +1,6 @@
 # DSH-CAPP: intent and MVP design
 
-Status: draft v0 · 2026-11-08 · Owner: cosmic-snail
+Status: draft v0 · 2026-11-08 · Owner: cosmic-snail · Engineering detail: [spec.md](spec.md)
 
 ## 1. Intent
 
@@ -54,7 +54,7 @@ The repository is a pnpm workspace. Each plugin is packed to a `.tgz` and instal
 ```text
 dsh-capp/
   packages/
-    capp-schemas/     plain package: JSON Schemas + TS types for the file formats (§6)
+    capp-common/      plain package bundled into each plugin: JSON Schemas, types, job store (§6)
     capp-step/        plugin: STEP → part.json via NX
     capp-planning/    plugin: templates, plan create/revise/validate, approval endpoint
     capp-cam/         plugin: Mastercam runs → NC
@@ -194,7 +194,6 @@ Config: `templatesDir` (absolute; holds the private template files).
 - `base_revision` must match the latest revision. That keeps the agent from editing a stale plan, and it is the only concurrency control.
 - `error`-level issues come only from the three hard checks in §2. Everything else is `warn`.
 
-Panel endpoints: `GET /api/capp/jobs`, `GET /api/capp/jobs/:id`, `POST /api/capp/jobs/:id/approve { revision }`, `POST /api/capp/jobs/:id/nc-review { run, decision, note }`.
 Skills: `plan-torus-template` (mode A) and `plan-freeform` (mode B: how to reason from features to operations, with the torus template as a worked example).
 
 ### 7.3 `capp-cam`
@@ -218,7 +217,7 @@ This is a client panel (`customFrame: true`, business-first) with three tabs:
 - **Process card:** the operations table of the current revision, a revision picker, and the **Approve** button.
 - **NC:** the run list, the NC viewer, and the **Approve NC / Reject** buttons.
 
-It reads and writes only through the `/api/capp` endpoints. The host's native `conversation` node is embedded for AI help.
+Its server half owns the `/api/capp` endpoints (`GET /jobs`, `GET /jobs/:id`, `POST /jobs/:id/approve`, `POST /jobs/:id/nc-review`; see spec §4.5). These are the only writers of `approval.json` and `nc-review.json`. The host's native `conversation` node is embedded for AI help.
 
 ## 8. Open-source boundary
 

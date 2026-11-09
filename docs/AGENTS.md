@@ -10,6 +10,7 @@ These rules extend the [root agent rules](../AGENTS.md). Each fact has one owner
 | [spec.md](spec.md) | Locked stack, architecture, module boundaries, interfaces, guardrails, steps and gates. Wins over design.md for engineering |
 | [assets.md](assets.md) | Where private assets live and how a developer wires them up |
 | [development.md](development.md) | Local checks, the git hook, CI and what each proves |
+| [plans/](plans/mvp-execution.md) | How spec §7 steps are executed: work packages, tasks, gate outlines. Never overrides the spec or design |
 | `host-patches.md` | Unavoidable changes to the forked host (create it with the first patch) |
 | [acceptance/](acceptance/README.md) | One gate script per gate, with dated run records |
 | `experiments/` | Dated experiment reports, such as the mode A/B planning runs |

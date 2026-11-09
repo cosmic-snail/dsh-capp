@@ -29,6 +29,10 @@ part = session.Parts.NewDisplay(
 
 importer = session.DexManager.CreateStep214Importer()
 importer.InputFile = STEP_FILE
+# OutputFile is the importer's intermediate conversion target; FileOpenFlag=False
+# keeps it from opening a second display part, so the geometry lands in the
+# display part created above, which is then saved as the work part the
+# extractor reads. Verified on NX 2306 (Bodies: 1).
 importer.OutputFile = os.path.join(WORK_DIR, "converted.prt")
 importer.SettingsFile = SETTINGS_FILE
 importer.FileOpenFlag = False

@@ -18,7 +18,13 @@ async function pluginPackages() {
   for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
     if (!entry.isDirectory()) continue
     const dir = join(PACKAGES, entry.name)
-    const pkg = JSON.parse(await readFile(join(dir, 'package.json'), 'utf8'))
+    const manifest = join(dir, 'package.json')
+    if (!existsSync(manifest)) {
+      // Spike directories (e.g. packages/capp-step) carry assets before their package exists.
+      console.log(`skip ${entry.name}: no package.json`)
+      continue
+    }
+    const pkg = JSON.parse(await readFile(manifest, 'utf8'))
     // Private packages (capp-common) are bundled into plugins, never built on their own.
     if (pkg.private) continue
     plugins.push({ dir, name: pkg.name, version: pkg.version })

@@ -12,7 +12,9 @@ cd /d <work-dir>
 ```
 
 - `journal.py` is rendered from [`nx/journal.py.tpl`](nx/journal.py.tpl): the `{{NAME}}` placeholders become absolute paths (work dir, STEP file, STEP214 settings file, extractor script, output dir). All paths inside the journal are absolute, so the working directory only needs to be writable.
-- Environment: `UGII_BASE_DIR`, `UGII_LANG`, `SPLM_LICENSE_SERVER` are required and are already set as system environment variables on the Windows machine — a plain shell inherits them, nothing had to be recovered from the registry. `UGS_LICENSE_BUNDLE` is absent there and the run succeeded without it.
+- NX 2306 embeds **Python 3.10** (`NXBIN\python310.dll`); `run_journal.exe` runs the journal on it. The analyzer is a separate step on a normal Python 3 (3.12 verified).
+- The journal couples to the extractor's internals: it sets the module global `extractor.OUTPUT_DIRECTORY` and calls `extractor.main_v7()`. That contract is pinned only by the extractor's sha256 — a new extractor version may need a journal change.
+- Environment: `UGII_BASE_DIR`, `UGII_LANG`, `SPLM_LICENSE_SERVER` are required and are already set as system environment variables on the Windows machine — a plain shell inherits them, nothing had to be recovered from the registry. `UGS_LICENSE_BUNDLE` is absent there and the run succeeded without it. Whether the Harness `ctx.sandbox.confine`/`ctx.subprocess.spawn({ env })` path inherits these system variables is still open; it is tracked with S-PERM in S2.
 - The STEP214 importer uses the `step214ug.def` settings file (`nx-step-settings` asset, inside the NX install's `STEP214UG` directory).
 - The extractor (`nx-extractor` asset) is loaded inside the journal via `importlib` and writes its report under `<work-dir>\extraction\`; the journal copies the single JSON to `<out-dir>\nx-report.json`.
 - Observed run time on the torus STEP: about 2 minutes for the NX part, about 20 seconds for the analyzer.

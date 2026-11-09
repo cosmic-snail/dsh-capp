@@ -37,7 +37,7 @@ Contents: §1 tech stack and environment · §2 architecture · §3 directory to
 
 There is exactly one supported environment: **Windows 11 x64**, an interactive desktop session, one user. On that machine:
 - **DSH Desktop** v0.13.2, the official Windows x64 installer from the dataelement/dsh-desktop release.
-- **Siemens NX 2306** (the version the external extractor targets). It is invoked in batch mode; how exactly is confirmed in spike S-NX.
+- **Siemens NX 2306** (the version the external extractor targets). Batch invocation is decided: `run_journal.exe` (spec §8, S-NX).
 - **Mastercam 2026** (SDK `C_H_VERSION 2800`), running interactively with the user signed in. The Chinese UI is the only tested UI language.
 - **External assets** from the private Drive folder, synced to a local directory outside the repo (see [assets.md](assets.md)).
 - **Optional:** VS 2022 Build Tools (v143, x64 MFC) and Windows SDK 10.0.22621.0. Required only if spike S-MC shows a C++ CHook is unavoidable.
@@ -394,4 +394,4 @@ Rules for every step:
 | S-NX | **Decided:** `run_journal.exe <journal.py>` is the batch entry; it needs `UGII_BASE_DIR`, `UGII_LANG`, `SPLM_LICENSE_SERVER` (system env on the Windows machine); `UGS_LICENSE_BUNDLE` not required. Verdict and command line: `packages/capp-step/README.md`, G-NX | S-NX |
 | S-JOBS | Use the host `jobs` service (`@deepseek-ai/dsh-jobs`) for CAM runs instead of our runner | During S5, only if it simplifies; the default is our runner |
 | S-WS | Can the client get the current session workspace from host APIs? If yes, the panel filters jobs by workspace; if no, the global index stays | S4 |
-| S-PERM | Do NX and Mastercam subprocesses need sandbox escalation (`approveEscalation`) under the session's permission mode? | S2 |
+| S-PERM | Do NX and Mastercam subprocesses need sandbox escalation (`approveEscalation`) under the session's permission mode? Also whether `ctx.sandbox.confine`/`ctx.subprocess.spawn({ env })` inherits the system NX/Mastercam environment variables | S2 |

@@ -21,9 +21,9 @@ Both reports are produced from the command line recorded in `packages/capp-step/
 ## Runs
 
 ### 2026-11-09 · pass
-- Commit: spike/s-nx-batch (PR pending at run time; journal template and README are the gated artifacts)
-- NX: Siemens NX 2306 (`23.06.1700.00000`); analyzer on Python 3.12.10. No DSH, no Mastercam.
-- Assets: `torus-step`, `nx-step-settings` (NX's own `STEP214UG\step214ug.def`), `nx-extractor`, `nx-analyzer` — sha256 matched `assets/manifest.example.json` before the run.
+- Commit: `a91f775` (branch `spike/s-nx-batch`; journal template and README are the gated artifacts)
+- NX: Siemens NX 2306 (`23.06.1700.00000`, embedded Python 3.10); analyzer on Python 3.12.10. No DSH, no Mastercam.
+- Assets: `torus-step`, `nx-step-settings` (NX's own `STEP214UG\step214ug.def`), `nx-extractor`, `nx-analyzer` — sha256 compared against the local asset manifest before the run (the example manifest carries placeholders for machine-local files).
 - Seen:
   - `run_journal.exe journal.py` (cwd = work dir) ran the STEP214 import and the extractor; console showed the extractor's V7 banner, `Bodies: 1`, `Corrected B-Rep topology/loops: READY`. `nx-report.json` appeared in the output dir with the expected top-level keys.
   - The analyzer CLI (`main_v3`) wrote `analysis.json` and `analysis.log`; part family `axisymmetric_hollow_stepped_part`, 6 turning features.

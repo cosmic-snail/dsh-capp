@@ -6,7 +6,8 @@
     { "id": "torus-step",        "file": "<ring>.step",   "sha256": "46d4cd6f64d3f239fc40934c7bc0178063ef75327aa449268b29d76ca7c9c808" },
     { "id": "torus-mcam",        "file": "<ring>.mcam",   "sha256": "7c279238996e717f43dc20ff69f055edae75cad281344f636805bb03c3956804" },
     { "id": "torus-template",    "file": "golden-b7.template.json", "sha256": "<fill>" },
-    { "id": "mill-turn-post",    "file": "<post>.pst",    "sha256": "<fill>" },
+    { "id": "mill-turn-post",    "file": "MPLFAN.pst",  "sha256": "513d9fa26b77d75be287968360abffa7af1e4c1a90a271942777fb28ec7e7bda" },
+    { "id": "nx-step-settings",  "file": "step214ug.def", "sha256": "7964c3c965005b6ea62d71f7c28dee75088ddc78545c264babdf3c57c0c304e6" },
     { "id": "nx-extractor",      "file": "nx2306_general_process_planning_input_extractor_v7.py", "sha256": "1d78b141901b921d4b2930e389968c784cc29943e96ac546eaaf31bbac31a8f7" },
     { "id": "nx-analyzer",       "file": "deterministic_geometry_manufacturing_analyzer.py",      "sha256": "d79335739bf30af5edec70ea7f6489c8b5cdf0ae0377a2d48067c0f2fbbe28c7" }
   ]

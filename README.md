@@ -4,18 +4,18 @@ AI-native computer-aided process planning (CAPP) on [DSH Desktop](https://github
 
 A set of DSH plugins that let the Harness agent take a part from **STEP → process plan → (human approval) → Mastercam CAM → NC → (human review)**, using DSH's own conversation and workbench panel as the UI.
 
-Status: **design / MVP**. Target: one fixed torus part end to end on Windows. See [docs/design.md](docs/design.md).
+Status: **design / MVP**. Target: one fixed torus part end to end on Windows. See [docs/design.md](docs/design.md) for intent and [docs/spec.md](docs/spec.md) for the engineering spec.
 
 ## Packages (planned)
 
 | Package | Role |
 |---|---|
-| `capp-schemas` | JSON Schemas and types for the job files |
+| `capp-common` | JSON Schemas, types and the job store, bundled into each plugin |
 | `capp-step` | STEP → `part.json` via NX |
 | `capp-planning` | Process plans: template-fill and freeform modes |
 | `capp-cam` | Mastercam runs → NC |
 | `capp-workbench` | Business panel with approval buttons |
-| `bridge/mastercam` | Windows Mastercam SDK add-in |
+| `bridge/mastercam` | C# script templates sent to Mastercam over its named pipe |
 
 ## Assets are not in this repository
 

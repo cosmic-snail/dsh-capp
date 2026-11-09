@@ -31,3 +31,6 @@ bridge/**/obj/
 bridge/**/x64/
 .vs/
 .DS_Store
+# Dev tooling
+coverage/
+.worktrees/

@@ -6,15 +6,15 @@ Status: draft v0 · 2026-11-08 · Owner: cosmic-snail · Engineering detail: [sp
 
 Rebuild CAPPtron's process-planning workflow, **STEP → part model → process plan → human approval → Mastercam CAM → NC → human review**, as a set of plugins on DSH Desktop. The goal is an AI-native CAPP tool:
 
-- **DSH is the product shell.** The Harness agent is the conversational and orchestration layer, and DSH's own conversation and workbench panel are the only UI. No separate web frontend.
+- **DSH Desktop is the product shell.** The Harness agent is the conversational and orchestration layer, and DSH Desktop's own conversation and workbench panel are the only UI. No separate web frontend.
 - **Capabilities are agent tools.** Each step is a plugin that registers tools and skills on the DSH bus. The agent decides how to chain them, and you steer it in conversation.
 - **Complete rebuild.** No CAPPtron-core code is reused. CAPPtron is used only as a *reference* for domain logic and for the Mastercam bridge.
-- **MVP = the torus.** The fixed Golden-B7 seven-operation ring part runs end to end in one DSH session on the Windows machine that runs Mastercam.
+- **MVP = the torus.** The fixed Golden-B7 seven-operation ring part runs end to end in one DSH Desktop session on the Windows machine that runs Mastercam.
 - **Open source.** The code is public. Proprietary assets, vendor SDKs and machine details are not (see §8).
 
 ### Non-goals for the MVP
 
-- Cross-platform. Windows only, with DSH, NX and Mastercam all on one machine.
+- Cross-platform. Windows only, with DSH Desktop, NX and Mastercam all on one machine.
 - Arbitrary parts, multiple setups, creating new CAM operations from scratch, and choosing tools or coordinate systems.
 - Crash recovery, idempotent command replay, an evidence ledger, or multi-user workflows.
 - Manufacturing acceptance. NC output is a candidate for human review, and nothing more.
@@ -45,11 +45,11 @@ A DSH plugin is an npm package with a `cordis.patch.yml`, a server entry (`apply
 | `ctx.subprocess` / `ctx.sandbox` / `ctx.sandboxPolicy` | Running NX and the Mastercam bridge, and resolving the session workspace |
 | `ctx.desktopWorkbenches.register(...)` (client) | The CAPP business panel |
 
-Reference implementations in the forked host: `packages/dsh-image-generation`, `packages/dsh-desktop-office`, and `docs/workbench-standard.*.md`.
+Reference implementations in the host repo (dataelement/dsh-desktop): `packages/dsh-image-generation`, `packages/dsh-desktop-office`, and `docs/workbench-standard.*.md`.
 
 ## 4. Packages
 
-The repository is a pnpm workspace. Each plugin is packed to a `.tgz` and installed into the forked DSH Desktop with the local-install flow. The host fork (`dsh-desktop`) carries no CAPP code.
+The repository is a pnpm workspace. Each plugin is packed to a `.tgz` and installed into DSH Desktop with the local-install flow. The host (`dsh-desktop`) carries no CAPP code.
 
 ```text
 dsh-capp/
@@ -66,7 +66,7 @@ dsh-capp/
   docs/
 ```
 
-The three capability plugins have **no UI**. They also work in a plain native DSH session. `capp-workbench` is a thin panel over the same files.
+The three capability plugins have **no UI**. They also work in a plain native DSH Desktop session. `capp-workbench` is a thin panel over the same files.
 
 ## 5. Workflow (torus, end to end)
 
@@ -217,7 +217,7 @@ This is a client panel (`customFrame: true`, business-first) with three tabs:
 - **Process card:** the operations table of the current revision, a revision picker, and the **Approve** button.
 - **NC:** the run list, the NC viewer, and the **Approve NC / Reject** buttons.
 
-Its server half owns the `/api/capp` endpoints (`GET /jobs`, `GET /jobs/:id`, `POST /jobs/:id/approve`, `POST /jobs/:id/nc-review`; see spec §4.5). These are the only writers of `approval.json` and `nc-review.json`. The host's native `conversation` node is embedded for AI help.
+Its server half owns the `/api/capp` endpoints (`GET /api/capp/jobs`, `GET /api/capp/job?id=`, `POST /api/capp/approve?id=`, `POST /api/capp/nc-review?id=`; see spec §4.5). These are the only writers of `approval.json` and `nc-review.json`. The host's native `conversation` node is embedded for AI help.
 
 ## 8. Open-source boundary
 
@@ -234,8 +234,8 @@ Its server half owns the `/api/capp` endpoints (`GET /jobs`, `GET /jobs/:id`, `P
 | Machine names or addresses, SSH keys, API keys, rclone or Drive configs | Secrets and infrastructure |
 
 How it works:
-- `assets/manifest.example.json` lists each asset's logical id, file name and sha256, plus the Drive *folder name* (not a share link).
-- Each developer syncs the Drive folder to a local directory outside the repo. Plugin configs point at absolute paths in that directory.
+- `assets/manifest.example.json` lists each asset's logical id, file name and sha256, plus the Drive folder **id** for `rclone --drive-root-folder-id` (not a share link or breadcrumb path).
+- Each developer syncs the Drive folder to a local directory outside the repo ([assets](assets.md)). Plugin configs point at absolute paths in that directory.
 - `.gitignore` blocks `*.step`, `*.stp`, `*.mcam`, `*.pst`, `*.nc`, `assets/*` (except the example manifest), and `.env*`. That's the only guard (principle 1).
 
 ## 9. The planning experiment (mode A vs mode B)
@@ -258,7 +258,7 @@ The results go to `docs/experiments/planning-modes-<date>.md`. A mode-B plan tha
 
 | # | Deliverable | Done when |
 |---|---|---|
-| M0 | Repo, pnpm workspace, empty `capp-workbench` and `capp-common`, Windows dev setup notes | The panel loads in the forked DSH on the Windows machine; the asset manifest resolves locally |
+| M0 | Repo, pnpm workspace, empty `capp-workbench` and `capp-common`, Windows dev setup notes | The panel loads in DSH Desktop on the Windows machine; the asset manifest resolves locally |
 | M1 | `capp-step` | The torus STEP gives a `part.json` with the expected features, called by the agent in a session |
 | M2 | `capp-planning` mode A + the process-card tab + Approve | The agent creates the 7-op plan, revises rough_step 0.5 → 0.4 on request, and the user approves in the panel |
 | M3 | Mastercam bridge + `capp-cam` (regen + post) | The approved plan yields `program.nc` for both rough_step values; the NC tab shows it |

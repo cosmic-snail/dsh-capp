@@ -10,14 +10,14 @@
 
 - **Never commit assets or secrets** ([docs/assets.md](docs/assets.md)): no STEP/MCAM/PST/NC files, NX scripts, SDK files, machine names or addresses, keys, logs, screenshots or session exports. Refer to assets by their logical id from `assets/manifest.example.json`. `.gitignore` plus review is the only asset guard (spec G8), so look at `git status` before every commit.
 - Keep validation minimal: only the three hard checks in design §2 and the guardrails in spec §6.3. Prefer a warning over a block and a rerun over recovery logic. Don't build anything on the spec §6.4 anti-pattern list.
-- Plugins follow the DSH plugin and workbench standard in the forked host (`dsh-desktop/docs/workbench-standard.*.md`). No CAPP code goes into the host fork; unavoidable host changes are recorded in `docs/host-patches.md`.
+- Plugins follow the DSH plugin and workbench standard in the host repo (`dataelement/dsh-desktop`, `docs/workbench-standard.*.md`). No CAPP code goes into the host; an unavoidable host change goes into a fork and is recorded in `docs/host-patches.md`.
 - CAPPtron-core is reference only. Don't copy its code.
 - Approving a plan and approving NC are human panel actions. Never add a tool, script or test helper that writes `approval.json` or `nc-review.json` outside the `capp-workbench` endpoints.
 
 ## Two kinds of skills
 
 - `.agents/skills/` holds **development** skills for agents working on this repo. They never ship.
-- `packages/*/skills/` holds **product** skills the DSH Harness agent loads at runtime. Changing one is a behavior change: it needs the owning plugin's gate, not just a docs check.
+- `packages/*/skills/` holds **product** skills the Harness agent loads at runtime. Changing one is a behavior change: it needs the owning plugin's gate, not just a docs check.
 
 ## Changing and checking
 

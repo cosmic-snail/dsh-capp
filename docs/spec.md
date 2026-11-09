@@ -12,8 +12,8 @@ Contents: §1 tech stack and environment · §2 architecture · §3 directory to
 
 | Item | Locked value | Notes |
 |---|---|---|
-| Host app | Forked `dsh-desktop` (our fork) | No CAPP code in the fork. Host changes only for bugs we can't work around, recorded in `docs/host-patches.md` |
-| Harness packages | `@deepseek-ai/dsh-*` **0.2.2-alpha.2** (exact) | Matches the fork's lockfile. A host upgrade is a separate, explicit task |
+| Host app | DSH Desktop from [dataelement/dsh-desktop](https://github.com/dataelement/dsh-desktop), official release **v0.13.2**, unchanged | No CAPP code in the host. A host change only for a bug we can't work around: it goes into a fork of dataelement/dsh-desktop and is recorded in `docs/host-patches.md` |
+| Harness packages | `@deepseek-ai/dsh-*` **0.2.2-alpha.2** (exact) | Matches the v0.13.2 lockfile. A host upgrade is a separate, explicit task |
 | Cordis | `@deepseek-ai/cordis` **4.0.6-alpha.1** | Peer dependency only |
 | Schemastery | `@deepseek-ai/schemastery` **3.18.6-alpha.1** | Plugin `Config` schemas only |
 | Plugin runtime | Electron **44.7.0** in Node mode (`ELECTRON_RUN_AS_NODE=1`) | We never ship our own Node. **No native addons** in plugins |
@@ -25,7 +25,7 @@ Contents: §1 tech stack and environment · §2 architecture · §3 directory to
 |---|---|
 | Language | TypeScript **5.9.3**, `strict`, `noUncheckedIndexedAccess`, ESM, target ES2023 |
 | Bundler | esbuild **0.25.12**: server → one ESM file per plugin; client → one IIFE file wrapped in `window.__ModuleLoader__.load` |
-| Package manager | pnpm **10.34.5** workspace (the `dsh-capp` repo only; the fork keeps npm) |
+| Package manager | pnpm **10.34.5** workspace (the `dsh-capp` repo only; dsh-desktop keeps npm) |
 | Dev Node (build, test, and lint) | Node 22 LTS, **22.13** or newer |
 | Tests | vitest **4.x**, for pure modules only |
 | JSON validation | ajv **8.x** (draft 2020-12), bundled into each plugin |
@@ -36,7 +36,7 @@ Contents: §1 tech stack and environment · §2 architecture · §3 directory to
 ### 1.3 Target machine (acceptance environment)
 
 There is exactly one supported environment: **Windows 11 x64**, an interactive desktop session, one user. On that machine:
-- **DSH Desktop** (fork build, Windows x64 installer or dev build).
+- **DSH Desktop** v0.13.2, the official Windows x64 installer from the dataelement/dsh-desktop release.
 - **Siemens NX 2306** (the version the external extractor targets). It is invoked in batch mode; how exactly is confirmed in spike S-NX.
 - **Mastercam 2026** (SDK `C_H_VERSION 2800`), running interactively with the user signed in. The Chinese UI is the only tested UI language.
 - **External assets** from the private Drive folder, synced to a local directory outside the repo (see [assets.md](assets.md)).
@@ -46,14 +46,14 @@ Development may happen on macOS (build, unit tests, packing). **Acceptance gates
 
 ### 1.4 Model
 
-The plugins **never call an LLM**. The Harness agent, configured in DSH settings (any provider), is the only model consumer. Plugins provide tools, skills and prompt sections. This keeps the "AI-native" logic in the agent and the skills, and makes the mode A/B experiment a property of the agent, not of our code.
+The plugins **never call an LLM**. The Harness agent, configured in DSH Desktop settings (any provider), is the only model consumer. Plugins provide tools, skills and prompt sections. This keeps the "AI-native" logic in the agent and the skills, and makes the mode A/B experiment a property of the agent, not of our code.
 
 ---
 
 ## 2. Architecture
 
 ```text
-┌──────────────────────────── DSH Desktop (fork, unchanged) ────────────────────────────┐
+┌─────────────────────────── DSH Desktop v0.13.2 (unchanged) ───────────────────────────┐
 │ Harness agent loop · sessions · workspaces · model providers · Plugin Manager        │
 │                                                                                     │
 │  Cordis bus (ctx): tools · skills · systemPrompt · connection.fetch · subprocess     │
@@ -78,7 +78,7 @@ The plugins **never call an LLM**. The Harness agent, configured in DSH settings
 | # | Decision | Rationale |
 |---|---|---|
 | A1 | **Files are the only shared state.** Plugins don't call each other or provide Cordis services to each other | No load-order coupling; every step can be inspected and re-run; the agent can read the same files |
-| A2 | **`capp-common` is bundled into each plugin at build time**, not installed | DSH's loader is strict about resolution; bundling avoids cross-plugin dependency resolution entirely |
+| A2 | **`capp-common` is bundled into each plugin at build time**, not installed | The host's loader is strict about resolution; bundling avoids cross-plugin dependency resolution entirely |
 | A3 | **Approval writes happen only in `capp-workbench` HTTP endpoints**, called by panel buttons | Approval is human-only by construction: no tool exists that can write it |
 | A4 | **Jobs live in the session workspace**, with a global index under `DSH_HOME` | The agent sees the files in its workspace, and the panel finds jobs through the index without depending on unconfirmed client workspace APIs |
 | A5 | **CAM runs are background tasks** in the `capp-cam` process, one at a time, with progress in `status.json` | Mastercam can do one thing at a time; tool calls must not block for minutes. Spike S-JOBS decides whether the host `jobs` service replaces our runner |
@@ -250,18 +250,19 @@ Bridge script contract: each `*.csx.tpl` receives absolute paths only (`request.
 ### 4.5 `capp-workbench`
 
 ```ts
-// server endpoints (all JSON, all under /api/capp)
-GET  /api/capp/jobs                              → { jobs: [{ id, label, updated_at }] }
-GET  /api/capp/jobs/:id                          → { part?, plan?, revisions: number[], approval?, runs: CamStatus[], nc_review? }
-GET  /api/capp/jobs/:id/plan?revision=n          → Plan
-GET  /api/capp/jobs/:id/runs/:run/nc?from&count  → { total_lines, lines }
-POST /api/capp/jobs/:id/approve                  { revision } → Approval        // writes approval.json
-POST /api/capp/jobs/:id/nc-review                { run, decision, note } → NcReview
+// server endpoints: exact paths under /api/capp; ids and options go in the query string
+GET  /api/capp/ping                                      → { ok: true }          // S0 only, removed in S4
+GET  /api/capp/jobs                                      → { jobs: [{ id, label, updated_at }] }
+GET  /api/capp/job?id=                                   → { part?, plan?, revisions: number[], approval?, runs: CamStatus[], nc_review? }
+GET  /api/capp/plan?id=&revision=                        → Plan
+GET  /api/capp/nc?id=&run=&from=&count=                  → { total_lines, lines }
+POST /api/capp/approve?id=          { revision }         → Approval        // writes approval.json
+POST /api/capp/nc-review?id=        { run, decision, note } → NcReview
 // client
 register({ title: 'CAPP', customFrame: true, headerLayout: 'compact' }, CappPanel)   // tabs: Part · Process card · NC
 ```
 
-The panel polls `GET /jobs/:id` every 2 s while a CAM run is `running`. No websockets.
+`connection.fetch.register` matches the exact pathname only (Harness 0.2.2-alpha.2, `@deepseek-ai/dsh-client-connection`), so a path segment such as `:id` is literal text, not a parameter. The `/api/capp/` prefix follows workbench standard §3.4 (endpoints under the workbench's own prefix). The host's own workbench plugin uses the same shape (`/api/desktop-workbenches/state`, `/api/desktop-workbenches/market-install`); the dot style of `dsh-image-generation` (`/api/image-generation.preview`) is a capability plugin's choice, not a rule the standard sets for workbenches. The panel polls `GET /api/capp/job?id=` every 2 s while a CAM run is `running`. No websockets.
 
 ---
 
@@ -321,7 +322,7 @@ panel NC tab shows run list and NC text → user clicks Approve NC / Reject → 
 
 ### 6.1 Style
 
-- Match the DSH house style: two-space indent, single quotes, no semicolons, named exports, kebab-case files, camelCase functions, PascalCase types.
+- Match the host's house style: two-space indent, single quotes, no semicolons, named exports, kebab-case files, camelCase functions, PascalCase types.
 - TypeScript `strict` with no `any`. Use `unknown` plus a schema check at the boundaries (files, tool args, HTTP bodies, pipe replies). No non-null assertions.
 - Small modules with one responsibility each. Comments explain *why* and the host or vendor quirks, not *what*.
 - Logs go through `ctx.logger` as `capp-<plugin>: <event>; key=value`. Never log API keys or file contents. Absolute paths to local assets are fine in local logs, but must not end up in committed fixtures or docs.
@@ -355,7 +356,8 @@ These are not to be built: idempotency keys or command replay; recovery state ma
 
 - Unit tests (vitest) cover only the pure modules: `normalize`, `plan`, `request`, `nc`, plus `docs` and `paths` in common.
 - Fixtures are synthetic and hand-written (a fake two-op part and a toy template). Real torus data is never a fixture.
-- Every gate (§7) has a **manual acceptance script** in `docs/acceptance/G<n>.md`: steps, expected result, and a record of the actual run (date, DSH version, what was seen). Passing the script on the Windows machine **is** the gate.
+- Every gate (§7) has a **manual acceptance script** in `docs/acceptance/G<n>.md`: steps, expected result, and a record of the actual run (date, DSH Desktop version, what was seen). Passing the script on the Windows machine **is** the gate.
+- Gates may drive the agent through the Harness command line (`headless --json` events are the evidence) on the Windows machine; steps that need the panel, including both human approvals, stay in DSH Desktop.
 
 ---
 
@@ -365,7 +367,7 @@ The order is driven by risk: the riskiest integration (Mastercam) gets spiked ri
 
 | Step | Work | Gate (pass on the Windows machine) |
 |---|---|---|
-| **S0 Skeleton** | Workspace, `build.mjs`/`pack.mjs`, `capp-common` stub, `capp-workbench` with an empty panel and a `capp_ping` tool (registered by the workbench, removed in S4) | **G0:** the `.tgz` installs via `install_local_workbench`; after a Harness restart, "CAPP" appears in the workbench switcher; the panel opens; the agent calls `capp_ping` and gets `pong` |
+| **S0 Skeleton** | Workspace, `build.mjs`/`pack.mjs`, `capp-common` stub, `capp-workbench` with an empty panel and a `capp_ping` tool (registered by the workbench, removed in S4) | **G0:** from the Harness command line, the `.tgz` installs, the `capp-workbench` row is composed, the agent calls `capp_ping` and gets `pong`, and the web profile serves `GET /api/capp/ping`; in DSH Desktop, the `.tgz` installs via `install_local_workbench` (restart Harness only if it reports `restart-required`), and "CAPP" appears in the workbench switcher and the panel shows "Server: ok" |
 | **S-MC Spike: Mastercam pipe** (time-box 2 days) | Node connects to `MastercamPipe<pid>`, sends a trivial C# script that returns the operation count of the open torus MCAM. Read the reference bridge for the regen and post API calls | **G-MC:** the script result shows the expected operation count. A written note settles C# only vs a C++ CHook, and the post-processing call path |
 | **S-NX Spike: NX batch** (time-box 1 day) | Run the external extractor on the torus STEP from the command line | **G-NX:** the reports are produced; the exact command line is recorded in `capp-step/README.md` |
 | **S1 Common** | Schemas, types, docs I/O, jobs index, `cappTool`, unit tests | **G1:** `pnpm test` is green; synthetic fixtures round-trip through `readDoc`/`writeDoc` |

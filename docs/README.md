@@ -18,4 +18,4 @@ Start with [status](status.md) to see what is merged and which gates have passed
 
 ## Using historical material
 
-Gate records in `acceptance/` and reports in `experiments/` are bound to the commit and DSH version they name. An old pass doesn't carry over to a new commit. Re-run the gate when the code it covers changes.
+Gate records in `acceptance/` and reports in `experiments/` are bound to the commit and DSH Desktop version they name. An old pass doesn't carry over to a new commit. Re-run the gate when the code it covers changes.

@@ -12,7 +12,7 @@ Commit, platform, commands, results and anything skipped. Keep local and CI sepa
 
 ## Gate
 
-Which gate covers this change, and was it run on the Windows machine? Link the run record in `docs/acceptance/G<n>.md` (commit, DSH version, installed `.tgz` hashes, what was seen). If it wasn't run, say why and what remains. NC output is a candidate for human review, never a manufacturing result.
+Which gate covers this change, and was it run on the Windows machine? Link the run record in `docs/acceptance/G<n>.md` (commit, DSH Desktop version, installed `.tgz` hashes, what was seen). If it wasn't run, say why and what remains. NC output is a candidate for human review, never a manufacturing result.
 
 ## Open-source boundary
 

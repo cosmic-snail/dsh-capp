@@ -25,20 +25,22 @@ S0 ──► S-MC ────────────────────�
 | Marker | Meaning |
 |---|---|
 | **[any]** | Can be done on any machine with Node 22 and pnpm (macOS, Linux, cloud). Typecheck and unit tests run here |
-| **[W]** | Needs the Windows machine: the forked DSH Desktop, plus NX and/or Mastercam and the private assets synced locally |
+| **[W]** | Needs the Windows machine: the DSH Desktop release named in spec §1.1, plus NX and/or Mastercam and the private assets synced locally |
 | **[H]** | Needs a human decision or action. The agent prepares it, states it in one message, and waits |
 
 Gates are always **[W]**. If the executing agent has no Windows access, it finishes the [any] tasks, writes the gate script, opens the PR as *gate not run*, and hands the gate to the human. It does not mark the step done.
+
+Inside a gate, steps that need the agent run it through `scripts/dsh-cli.cmd` on the Windows machine ([development](../development.md#harness-from-the-command-line)); only the steps that need the panel — including both human approvals — stay in the DSH Desktop UI (spec §6.5). Agent-driven steps may use the CLI, but the S-PERM permission check and the full G6 run must execute in a real DSH Desktop session: the headless profile has no `connection` service and a different plugin set, so its results are not equivalent.
 
 ### 0.3 Inputs to collect once, before S0 [H]
 
 Ask for these in one message at the start, not per step:
 
 1. **Windows access.** Will the agent run on the Windows machine (or have a shell there), or will a human run the gates?
-2. **Forked DSH Desktop** installed on the Windows machine, with its version or commit. Does a Harness session expose `install_local_workbench`? (Workbench standard §3.6.)
+2. **DSH Desktop** installed on the Windows machine, with its version. Does a Harness session expose `install_local_workbench`? (Workbench standard §3.6.)
 3. **Assets synced** to a local directory outside the repo, per [assets](../assets.md): the logical ids `torus-step`, `torus-mcam`, `torus-template`, `mill-turn-post`, `nx-extractor` and `nx-analyzer`, plus the NX STEP import settings file (`step214ug.def` or its equivalent, a new id `nx-step-settings`). Ask the user to fill in the missing sha256 values in their local manifest.
 4. **Installed versions:** NX 2306 and Mastercam 2026, with their install directories. These go into local plugin config only, never into git.
-5. **Model:** which model the DSH agent uses for the gate runs. It's recorded in gate records and the experiment.
+5. **Model:** which model the Harness agent uses for the gate runs. It's recorded in gate records and the experiment.
 
 ### 0.4 Definition of done (every package)
 
@@ -61,9 +63,9 @@ Stop and ask the user, with the evidence, when:
 
 ## 1. Host facts the plan relies on
 
-These were read from the forked host at Harness `0.2.2-alpha.2`. The S0 executor confirms them on the real host. Any that turn out wrong are fixed in the S0 PR, here and in the spec.
+These were read from the dataelement/dsh-desktop source at Harness `0.2.2-alpha.2`. The S0 executor confirms them on the real host. Any that turn out wrong are fixed in the S0 PR, here and in the spec.
 
-| Fact | Source in the fork |
+| Fact | Source in dsh-desktop |
 |---|---|
 | A tool is `defineTool({ name, description, parameters, output: { schema, render }, timeoutMs, isConcurrencySafe, presentCall, execute(args, exec) })`. `parameters` is a flat map `{ name: { type, required?, description?, enum?, items? } }`. `exec` carries `agent` (with `session.header.cwd`), `signal` and `callId` | `packages/dsh-image-generation/index.js`, `packages/dsh-desktop-workbenches/local-install-tool.mjs` |
 | Tools register with `ctx.tools.register(tool)`. The server entry exports `name`, `inject: string[]`, `Config` (Schemastery) and `apply(ctx, config)` | same |
@@ -77,7 +79,7 @@ These were read from the forked host at Harness `0.2.2-alpha.2`. The S0 executor
 | Workbench `package.json` needs `dsh.bundle.patch`, `dsh.client.platform: "web"`, `dsh.client.inject` **including `dsh-desktop-workbenches`**, and `exports["./client"]`. `@deepseek-ai/*` packages are peerDependencies | workbench standard §3.2 |
 | Local install: the agent calls `install_local_workbench({ path, replace })` with an absolute `.tgz` path. The result's `application` is `applied` or `restart-required`; anything else is a failure | workbench standard §3.6 |
 
-**Spec amendment to make in S0 if the routing fact holds:** spec §4.5 shows REST-style paths (`/api/capp/jobs/:id`). If `connection.fetch.register` only matches exact paths, use flat paths with query parameters: `GET /api/capp.jobs`, `GET /api/capp.job?id=`, `GET /api/capp.plan?id=&revision=`, `GET /api/capp.nc?id=&run=&from=&count=`, `POST /api/capp.approve?id=`, `POST /api/capp.nc-review?id=`. Update spec §4.5 and design §7.4 in the S0 PR, with the observed behavior as the reason.
+The routing fact held: `connection.fetch.register` matches exact pathnames only, so spec §4.5 and design §7.4 now use exact `/api/capp/<name>` paths with query-string ids. The `/api/capp/` prefix stays because of workbench standard §3.4.
 
 ## 2. Conventions shared by every package
 
@@ -128,6 +130,7 @@ The workbench additionally declares `dsh.client` (`platform: "web"`, `inject: ["
   ```
 
   `id` must equal the npm name. The bundle's `require('react')` resolves through the loader's `require`, so React is never bundled (spec §1.1).
+- `capp-common`'s `CAPP_VERSION` is injected, not literal: `src/index.ts` declares `__CAPP_VERSION__`, and every esbuild call gets `define: { __CAPP_VERSION__: <the building package's version> }`, so a bundle reports the version of the package that bundled it.
 - Copy `skills/` into place as is. No build step for skills.
 - The root scripts are: `typecheck` = `tsc -b` (project references, `noEmit`); `test` = `vitest run`; `build` = `node scripts/build.mjs`; `pack` = `node scripts/pack.mjs`. `scripts/check.mjs` calls these four by name ([development](../development.md)).
 
@@ -162,16 +165,16 @@ Each package lists: **Goal · Depends on · Files · Tasks · Unit tests · Gate
 **Depends on.** §0.3 inputs 1–2.
 
 **Files.**
-`package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `tsconfig.base.json`, `tsconfig.json` (references), `vitest.config.ts`, `scripts/build.mjs`, `scripts/pack.mjs`, `packages/capp-common/{package.json,tsconfig.json,src/index.ts}` (with `export const CAPP_VERSION = '0.0.1'` only), `packages/capp-workbench/{package.json,tsconfig.json,cordis.patch.yml,README.md,LICENSE,src/index.ts,src/client/index.tsx}`, `docs/acceptance/G0.md`.
+`package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`, `tsconfig.base.json`, `tsconfig.json` (references), `vitest.config.ts`, `scripts/build.mjs`, `scripts/pack.mjs`, `packages/capp-common/{package.json,tsconfig.json,src/index.ts}` (`src/index.ts` exports only `CAPP_VERSION`, a build-time constant), `packages/capp-workbench/{package.json,tsconfig.json,cordis.patch.yml,README.md,LICENSE,src/index.ts,src/client/index.tsx}`, `docs/acceptance/G0.md`.
 
 **Tasks.**
 1. [any] Root workspace: set `packageManager: "pnpm@10.34.5"` and `engines.node: ">=22"`, and add the four root scripts from §2.3. Lock with `pnpm install`.
 2. [any] `tsconfig.base.json`: `strict`, `noUncheckedIndexedAccess`, `module: "ESNext"`, `moduleResolution: "Bundler"`, `target: "ES2023"`, `jsx: "react"`, `noEmit`, `skipLibCheck`. Use `@types/node` 22. For `@types/react`, pick 18.3: the host app pins React 18.3.1, while some host plugins declare React 19 peers, so use only APIs common to both (spec §1.1).
-3. [any] `capp-workbench` server (`src/index.ts`): `name = 'capp-workbench'`, `inject = ['tools', 'connection']`, `Config = Schema.object({})`.
+3. [any] `capp-workbench` server (`src/index.ts`): `name = 'capp-workbench'`, `inject = ['tools']`, `Config = Schema.object({})`.
    - Register the tool `capp_ping` with `defineTool` directly (`cappTool` arrives in S1): no parameters, returns `{ pong: true, version }`.
-   - Register `GET /api/capp.ping` returning `{ ok: true }`. This also confirms the routing fact in §1. Try registering one path with a `:id` segment, record what happens, then remove it.
+   - Register `GET /api/capp/ping` returning `{ ok: true }` inside `ctx.inject(['connection'], …)`: the TUI and headless profiles have no `connection` service, so the route exists only where the web UI does. Routing was read from the host source: exact pathnames only (spec §4.5).
 4. [any] `capp-workbench` client (`src/client/index.tsx`): `register({ title: 'CAPP', description: 'AI-native process planning (MVP)', customFrame: true, headerLayout: 'compact' }, Panel)`.
-   - `Panel` renders a single `<header data-dsh-workbench-toolbar>` with the title, and a body that calls `/api/capp.ping` on mount and shows "Server: ok" or the error.
+   - `Panel` renders a single `<header data-dsh-workbench-toolbar>` with the title, and a body that calls `/api/capp/ping` on mount and shows "Server: ok" or the error.
    - `inject: ['desktopWorkbenches']`, and the unregister goes into `ctx.effect` (workbench standard §3.5).
 5. [any] `scripts/build.mjs` and `scripts/pack.mjs` per §2.3–2.4. `node scripts/check.mjs types test pack` must pass. Have vitest find no tests yet and exit 0 (use `passWithNoTests` in config).
 6. [any] Inspect the `.tgz`: `tar -tzf dist/capp-workbench-0.0.1.tgz` lists `package.json`, `lib/index.js`, `lib/client.js` and `cordis.patch.yml`. The packed `package.json` has no `capp-common` runtime dependency.
@@ -181,15 +184,7 @@ Each package lists: **Goal · Depends on · Files · Tasks · Unit tests · Gate
 
 **Unit tests.** None. vitest runs and finds none.
 
-**Gate G0 (script outline).**
-1. Copy `capp-workbench-<v>.tgz` to the Windows machine. In a DSH native session, ask the agent to install it with `install_local_workbench` → `application` is `applied` or `restart-required`.
-2. Restart Harness (top banner "Restart now" or Harness → Restart Harness) → no plugin recovery screen appears.
-3. Sidebar workbench switcher → "CAPP" is listed. Workbench management → Installed shows it marked "Local".
-4. Open CAPP → the panel shows "Server: ok". The toolbar sits correctly with the sidebar expanded and collapsed.
-5. Start a new session in the CAPP workbench and ask "call capp_ping" → the tool card shows `{ "pong": true, … }`.
-6. `dsh --profile web --dump-config` contains the `capp-workbench` row. Record only the row's id; no paths.
-
-**Pass criteria.** Steps 1–5 are observed as described, using the package hash recorded in the run.
+**Gate G0.** See [G0](../acceptance/G0.md) (part A on the command line, part B in DSH Desktop).
 **Out of scope.** Any CAPP logic, schemas or other plugins.
 
 ---
@@ -334,7 +329,7 @@ In `fixtures/`:
 
 ### S2 Step — `feat/s2-step`
 
-**Goal.** `step_parse` works in a real DSH session on the torus.
+**Goal.** `step_parse` works in a real Harness session on the torus.
 **Depends on.** S1 and G-NX.
 
 **Files.** In `packages/capp-step/`:
@@ -393,7 +388,7 @@ Also `fixtures/nx-report.synthetic.json` and `fixtures/analysis.synthetic.json`:
 **Unit tests.** `normalize` on the synthetic fixtures: expected feature types, unknown feature → a warning, missing material → null.
 
 **Gate G2 (outline).**
-1. Install `capp-step` (and the S0 workbench) → after a restart, a CAPP session can see the tool.
+1. Install `capp-step` (and the S0 workbench) → a fresh session sees the tool; restart Harness only if the install reports `restart-required`.
 2. Put the torus STEP in the session workspace and say "Parse this part" → `step_parse` runs (with an approval prompt if S-PERM required one) and `capp/<job>/part.json` exists.
 3. The feature list matches what the user expects of the torus. The human judges this; record the counts by type.
 4. Ask it to parse a path that doesn't exist → a clear one-line error, and no job directory is created.
@@ -472,7 +467,7 @@ Also `fixtures/nx-report.synthetic.json` and `fixtures/analysis.synthetic.json`:
 - `test/server.test.ts` for the pure request handlers, with handlers taking `(job, body)` so they can be tested without the host.
 
 **Tasks.**
-1. [any] Remove `capp_ping` and `/api/capp.ping`.
+1. [any] Remove `capp_ping` and `/api/capp/ping`.
 2. [any] Endpoints per spec §4.5, in the path style S0 settled.
    - `approve` reads the current `plan.json` and checks that `revision` equals the requested revision. If they differ, it returns 409 "The plan changed; review r<n>". It then writes `approval.json` with the plan's sha256. This is the **only** writer (G7).
    - The response bodies are the documents themselves.
@@ -487,7 +482,7 @@ Also `fixtures/nx-report.synthetic.json` and `fixtures/analysis.synthetic.json`:
    - The **Approve rN** button is shown only on the latest revision and asks for confirmation.
    - The layout responds to the container width (workbench standard §4): the table scrolls horizontally inside its own box.
    - With no job, the panel shows "No CAPP jobs yet — start a session and drop a STEP file", with no automatic session creation (workbench standard §6).
-5. [any] Embed the host `conversation` node (custom frame, workbench standard §4.1). The business view comes first; the conversation is on demand.
+5. [any] Embed the host `conversation` node (custom frame, workbench standard §4.1). The business view comes first; the conversation is on demand. This needs `@deepseek-ai/dsh-client-ui-conversation` added to `dsh.client.inject` — not needed for S0.
 6. [any] Write `docs/acceptance/G4.md`. [W] Run it.
 
 **Unit tests.** Approve handler: a matching revision writes the approval with the right sha; a stale revision gives 409. The NC-review handler waits for S5.
@@ -496,7 +491,7 @@ Also `fixtures/nx-report.synthetic.json` and `fixtures/analysis.synthetic.json`:
 1. Open the CAPP panel → the G3 job is listed, and the Part and Process card tabs show r2.
 2. Click Approve r2 and confirm → the badge reads "approved r2", and `plan_show` in the session says the same.
 3. Ask the agent to revise again → r3; the panel badge shows "approval is for r2"; the Approve button now offers r3.
-4. Narrow the window and collapse and expand the sidebar → no clipped controls or page-wide horizontal scroll.
+4. Narrow the window and collapse and expand the sidebar → no clipped controls or page-wide horizontal scroll. The workbench toolbar is verified with the sidebar expanded and collapsed — the check deferred from G0.
 
 **Out of scope.** CAM and NC.
 

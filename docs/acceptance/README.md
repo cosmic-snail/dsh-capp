@@ -25,7 +25,7 @@ The observable results that make this a pass. Anything outside them doesn't coun
 
 ### <YYYY-MM-DD> · <pass | fail | partial>
 - Commit: <sha> (branch / PR)
-- DSH: <fork version or commit> · NX / Mastercam versions if used
+- DSH: <DSH Desktop version> · NX / Mastercam versions if used
 - Plugin packages: <file names and sha256 of the installed .tgz>
 - Seen: what actually happened at each step, including the first error verbatim
 - Not run: steps skipped and why

@@ -9,6 +9,7 @@ Start with [status](status.md) to see what is merged and which gates have passed
 | Locked versions, architecture, module boundaries, interfaces | [Spec](spec.md) §1–4 |
 | Coding standards, the complete guardrail list, anti-patterns | [Spec](spec.md) §6 |
 | Which step is next and what its gate is | [Spec](spec.md) §7, then [status](status.md) |
+| How to execute a step: tasks, files, tests, gate outline | [MVP execution plan](plans/mvp-execution.md) |
 | What's in git and what isn't; wiring up private assets | [Assets](assets.md), [Design](design.md) §8 |
 | Local checks, the git hook, CI | [Development](development.md) |
 | Running and recording an acceptance gate | [Acceptance](acceptance/README.md) |

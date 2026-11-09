@@ -30,6 +30,8 @@ S0 ──► S-MC ────────────────────�
 
 Gates are always **[W]**. If the executing agent has no Windows access, it finishes the [any] tasks, writes the gate script, opens the PR as *gate not run*, and hands the gate to the human. It does not mark the step done.
 
+Inside a gate, steps that need the agent run it through `scripts/dsh-cli.cmd` on the Windows machine ([development](../development.md#harness-from-the-command-line)); only the steps that need the panel — including both human approvals — stay in the DSH Desktop UI (spec §6.5).
+
 ### 0.3 Inputs to collect once, before S0 [H]
 
 Ask for these in one message at the start, not per step:
@@ -38,7 +40,7 @@ Ask for these in one message at the start, not per step:
 2. **DSH Desktop** installed on the Windows machine, with its version. Does a Harness session expose `install_local_workbench`? (Workbench standard §3.6.)
 3. **Assets synced** to a local directory outside the repo, per [assets](../assets.md): the logical ids `torus-step`, `torus-mcam`, `torus-template`, `mill-turn-post`, `nx-extractor` and `nx-analyzer`, plus the NX STEP import settings file (`step214ug.def` or its equivalent, a new id `nx-step-settings`). Ask the user to fill in the missing sha256 values in their local manifest.
 4. **Installed versions:** NX 2306 and Mastercam 2026, with their install directories. These go into local plugin config only, never into git.
-5. **Model:** which model the DSH agent uses for the gate runs. It's recorded in gate records and the experiment.
+5. **Model:** which model the Harness agent uses for the gate runs. It's recorded in gate records and the experiment.
 
 ### 0.4 Definition of done (every package)
 
@@ -326,7 +328,7 @@ In `fixtures/`:
 
 ### S2 Step — `feat/s2-step`
 
-**Goal.** `step_parse` works in a real DSH session on the torus.
+**Goal.** `step_parse` works in a real Harness session on the torus.
 **Depends on.** S1 and G-NX.
 
 **Files.** In `packages/capp-step/`:
@@ -385,7 +387,7 @@ Also `fixtures/nx-report.synthetic.json` and `fixtures/analysis.synthetic.json`:
 **Unit tests.** `normalize` on the synthetic fixtures: expected feature types, unknown feature → a warning, missing material → null.
 
 **Gate G2 (outline).**
-1. Install `capp-step` (and the S0 workbench) → after a restart, a CAPP session can see the tool.
+1. Install `capp-step` (and the S0 workbench) → a fresh session sees the tool; restart Harness only if the install reports `restart-required`.
 2. Put the torus STEP in the session workspace and say "Parse this part" → `step_parse` runs (with an approval prompt if S-PERM required one) and `capp/<job>/part.json` exists.
 3. The feature list matches what the user expects of the torus. The human judges this; record the counts by type.
 4. Ask it to parse a path that doesn't exist → a clear one-line error, and no job directory is created.

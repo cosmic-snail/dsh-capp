@@ -46,7 +46,7 @@ Development may happen on macOS (build, unit tests, packing). **Acceptance gates
 
 ### 1.4 Model
 
-The plugins **never call an LLM**. The Harness agent, configured in DSH settings (any provider), is the only model consumer. Plugins provide tools, skills and prompt sections. This keeps the "AI-native" logic in the agent and the skills, and makes the mode A/B experiment a property of the agent, not of our code.
+The plugins **never call an LLM**. The Harness agent, configured in DSH Desktop settings (any provider), is the only model consumer. Plugins provide tools, skills and prompt sections. This keeps the "AI-native" logic in the agent and the skills, and makes the mode A/B experiment a property of the agent, not of our code.
 
 ---
 
@@ -78,7 +78,7 @@ The plugins **never call an LLM**. The Harness agent, configured in DSH settings
 | # | Decision | Rationale |
 |---|---|---|
 | A1 | **Files are the only shared state.** Plugins don't call each other or provide Cordis services to each other | No load-order coupling; every step can be inspected and re-run; the agent can read the same files |
-| A2 | **`capp-common` is bundled into each plugin at build time**, not installed | DSH's loader is strict about resolution; bundling avoids cross-plugin dependency resolution entirely |
+| A2 | **`capp-common` is bundled into each plugin at build time**, not installed | The host's loader is strict about resolution; bundling avoids cross-plugin dependency resolution entirely |
 | A3 | **Approval writes happen only in `capp-workbench` HTTP endpoints**, called by panel buttons | Approval is human-only by construction: no tool exists that can write it |
 | A4 | **Jobs live in the session workspace**, with a global index under `DSH_HOME` | The agent sees the files in its workspace, and the panel finds jobs through the index without depending on unconfirmed client workspace APIs |
 | A5 | **CAM runs are background tasks** in the `capp-cam` process, one at a time, with progress in `status.json` | Mastercam can do one thing at a time; tool calls must not block for minutes. Spike S-JOBS decides whether the host `jobs` service replaces our runner |
@@ -322,7 +322,7 @@ panel NC tab shows run list and NC text → user clicks Approve NC / Reject → 
 
 ### 6.1 Style
 
-- Match the DSH house style: two-space indent, single quotes, no semicolons, named exports, kebab-case files, camelCase functions, PascalCase types.
+- Match the host's house style: two-space indent, single quotes, no semicolons, named exports, kebab-case files, camelCase functions, PascalCase types.
 - TypeScript `strict` with no `any`. Use `unknown` plus a schema check at the boundaries (files, tool args, HTTP bodies, pipe replies). No non-null assertions.
 - Small modules with one responsibility each. Comments explain *why* and the host or vendor quirks, not *what*.
 - Logs go through `ctx.logger` as `capp-<plugin>: <event>; key=value`. Never log API keys or file contents. Absolute paths to local assets are fine in local logs, but must not end up in committed fixtures or docs.
@@ -356,7 +356,7 @@ These are not to be built: idempotency keys or command replay; recovery state ma
 
 - Unit tests (vitest) cover only the pure modules: `normalize`, `plan`, `request`, `nc`, plus `docs` and `paths` in common.
 - Fixtures are synthetic and hand-written (a fake two-op part and a toy template). Real torus data is never a fixture.
-- Every gate (§7) has a **manual acceptance script** in `docs/acceptance/G<n>.md`: steps, expected result, and a record of the actual run (date, DSH version, what was seen). Passing the script on the Windows machine **is** the gate.
+- Every gate (§7) has a **manual acceptance script** in `docs/acceptance/G<n>.md`: steps, expected result, and a record of the actual run (date, DSH Desktop version, what was seen). Passing the script on the Windows machine **is** the gate.
 - Gates may drive the agent through the Harness command line (`headless --json` events are the evidence) on the Windows machine; steps that need the panel, including both human approvals, stay in DSH Desktop.
 
 ---
@@ -367,7 +367,7 @@ The order is driven by risk: the riskiest integration (Mastercam) gets spiked ri
 
 | Step | Work | Gate (pass on the Windows machine) |
 |---|---|---|
-| **S0 Skeleton** | Workspace, `build.mjs`/`pack.mjs`, `capp-common` stub, `capp-workbench` with an empty panel and a `capp_ping` tool (registered by the workbench, removed in S4) | **G0:** from the Harness command line, the `.tgz` installs, the `capp-workbench` row is composed, the agent calls `capp_ping` and gets `pong`, and the web profile serves `GET /api/capp/ping`; in DSH Desktop, the `.tgz` installs via `install_local_workbench`, and after a Harness restart "CAPP" appears in the workbench switcher and the panel shows "Server: ok" |
+| **S0 Skeleton** | Workspace, `build.mjs`/`pack.mjs`, `capp-common` stub, `capp-workbench` with an empty panel and a `capp_ping` tool (registered by the workbench, removed in S4) | **G0:** from the Harness command line, the `.tgz` installs, the `capp-workbench` row is composed, the agent calls `capp_ping` and gets `pong`, and the web profile serves `GET /api/capp/ping`; in DSH Desktop, the `.tgz` installs via `install_local_workbench` (restart Harness only if it reports `restart-required`), and "CAPP" appears in the workbench switcher and the panel shows "Server: ok" |
 | **S-MC Spike: Mastercam pipe** (time-box 2 days) | Node connects to `MastercamPipe<pid>`, sends a trivial C# script that returns the operation count of the open torus MCAM. Read the reference bridge for the regen and post API calls | **G-MC:** the script result shows the expected operation count. A written note settles C# only vs a C++ CHook, and the post-processing call path |
 | **S-NX Spike: NX batch** (time-box 1 day) | Run the external extractor on the torus STEP from the command line | **G-NX:** the reports are produced; the exact command line is recorded in `capp-step/README.md` |
 | **S1 Common** | Schemas, types, docs I/O, jobs index, `cappTool`, unit tests | **G1:** `pnpm test` is green; synthetic fixtures round-trip through `readDoc`/`writeDoc` |

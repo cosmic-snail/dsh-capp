@@ -1,6 +1,6 @@
 # Development checks, git hook and CI
 
-Every check here reports and exits non-zero on failure. None of them fixes files, installs tools for you, or runs DSH, NX or Mastercam. Acceptance happens only through the gates in [acceptance/](acceptance/README.md); driving the Harness on the Windows machine from the command line is covered in [Harness from the command line](#harness-from-the-command-line).
+Every check here reports and exits non-zero on failure. None of them fixes files, installs tools for you, or runs DSH Desktop, NX or Mastercam. Acceptance happens only through the gates in [acceptance/](acceptance/README.md); driving the Harness on the Windows machine from the command line is covered in [Harness from the command line](#harness-from-the-command-line).
 
 You need Node 22 LTS (22.13 or newer) and git. pnpm 10.34.5 is needed for every group (spec §1.2). The docs check and the hook have no dependencies, so they work on a fresh clone before `pnpm install`.
 
@@ -76,7 +76,7 @@ dsh-cli --profile headless --json "<task>"
 dsh-cli --profile tui
 ```
 
-`--json` prints NDJSON run events — the evidence for tool calls. The model comes from `DEEPSEEK_API_KEY` in the user environment; the default model is `deepseek-flash`. The `headless` and `tui` profiles have no `connection` service, so workbench HTTP routes and the panel exist only in `web` / DSH Desktop. Nothing here runs in CI.
+`--json` prints NDJSON run events — the evidence for tool calls. The model comes from `DEEPSEEK_API_KEY` in the user environment and the profile's configured default; each gate run records the model id it used. The `headless` and `tui` profiles have no `connection` service, so workbench HTTP routes and the panel exist only in `web` / DSH Desktop. Nothing here runs in CI.
 
 ## Line endings
 

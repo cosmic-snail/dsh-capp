@@ -17,7 +17,7 @@
 ## Two kinds of skills
 
 - `.agents/skills/` holds **development** skills for agents working on this repo. They never ship.
-- `packages/*/skills/` holds **product** skills the DSH Harness agent loads at runtime. Changing one is a behavior change: it needs the owning plugin's gate, not just a docs check.
+- `packages/*/skills/` holds **product** skills the Harness agent loads at runtime. Changing one is a behavior change: it needs the owning plugin's gate, not just a docs check.
 
 ## Changing and checking
 

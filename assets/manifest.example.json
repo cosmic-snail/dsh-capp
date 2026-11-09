@@ -1,9 +1,9 @@
 {
   "schema": "capp.assets/v0",
-  "drive_folder": "CAPPtron / golden-b7 / 20261023",
-  "note": "Logical ids only. Real files are synced from the private Drive folder to a local directory outside this repo; plugin configs point to absolute paths there.",
+  "drive_folder": "1StoEZrJ32yKIxx4PbbSfHRz-9UBowKQa",
+  "note": "Logical ids only. drive_folder is the Google Drive folder id, used with rclone --drive-root-folder-id; the folder's breadcrumb name does not resolve as a Drive path. Real files are synced from the private Drive folder to a local directory outside this repo; plugin configs point to absolute paths there.",
   "assets": [
-    { "id": "torus-step",        "file": "<ring>.step",   "sha256": "<fill from Drive manifest>" },
+    { "id": "torus-step",        "file": "<ring>.step",   "sha256": "46d4cd6f64d3f239fc40934c7bc0178063ef75327aa449268b29d76ca7c9c808" },
     { "id": "torus-mcam",        "file": "<ring>.mcam",   "sha256": "7c279238996e717f43dc20ff69f055edae75cad281344f636805bb03c3956804" },
     { "id": "torus-template",    "file": "golden-b7.template.json", "sha256": "<fill>" },
     { "id": "mill-turn-post",    "file": "<post>.pst",    "sha256": "<fill>" },

@@ -56,11 +56,11 @@ dsh-capp/
   packages/
     capp-common/      plain package bundled into each plugin: JSON Schemas, types, job store (§6)
     capp-step/        plugin: STEP → part.json via NX
-    capp-planning/    plugin: templates, plan create/revise/validate, approval endpoint
+    capp-planning/    plugin: templates, plan create/revise/validate
     capp-cam/         plugin: Mastercam runs → NC
-    capp-workbench/   plugin: business panel (process card, NC view, approve buttons)
+    capp-workbench/   plugin: business panel + /api/capp endpoints (the only approval writer)
   bridge/
-    mastercam/        Windows-only Mastercam SDK add-in (rewritten; see §7.3)
+    mastercam/        C# script templates sent to Mastercam over its named pipe (rewritten; see §7.3)
   assets/
     manifest.example.json   names + sha256 of external assets; real files live outside git
   docs/
@@ -198,7 +198,7 @@ Skills: `plan-torus-template` (mode A) and `plan-freeform` (mode B: how to reaso
 
 ### 7.3 `capp-cam`
 
-Config: `mastercamExe`, `bridgeDll` (path to the built add-in), `assets` (absolute paths to the MCAM template and the post), `workDir`.
+Config: `mastercamExe`, `assets` (absolute paths to the MCAM template and the post), `workDir`, `stepTimeoutMs`.
 
 | Tool | Input | Output |
 |---|---|---|
@@ -208,7 +208,7 @@ Config: `mastercamExe`, `bridgeDll` (path to the built add-in), `assets` (absolu
 | `nc_read` | `{ job_id, run_id, from_line?, count?: ≤400 }` | `{ total_lines, lines[] }` |
 | `nc_diff` | `{ job_id, run_a, run_b }` | a unified diff, truncated |
 
-**Bridge (rewritten).** This is a Mastercam 2026 SDK add-in running inside an interactive Mastercam session (Mastercam can't run headless). It reads `request.json`, opens the template MCAM, writes operation parameters, regenerates toolpaths, posts with the configured post-processor, and writes `status.json` and `program.nc`. `capp-cam` starts the run, the bridge does the work, and the two share only the run directory. Single run at a time, no resume. The CAPPtron C++ CHook task (`m_main`) and the C#/UIA simulation scripts are a *reference* for which SDK calls work. They are not copied. Simulation is optional and is the last step to be built.
+**Bridge (rewritten).** Mastercam 2026 runs interactively (it can't run headless). `capp-cam` connects from Node to Mastercam's own named pipe (`MastercamPipe<pid>`) and sends C# scripts rendered from templates in `bridge/mastercam/`. The scripts open a copy of the template MCAM, write operation parameters, regenerate toolpaths and post with the configured post-processor. They write per-step results into the run directory, and `capp-cam` turns those into `status.json` and `program.nc`. A C++ CHook is added only if spike S-MC shows the C# API can't do a step (spec §8). Single run at a time, no resume. The CAPPtron C++ CHook task (`m_main`) and the C#/UIA simulation scripts are a *reference* for which SDK calls work. They are not copied. Simulation is optional and is the last step to be built.
 
 ### 7.4 `capp-workbench`
 
@@ -268,6 +268,6 @@ The results go to `docs/experiments/planning-modes-<date>.md`. A mode-B plan tha
 
 ## 11. Open items
 
-- The bridge language and SDK entry form (C++ CHook versus .NET add-in). Decide in M3 after reading the reference bridge.
-- How NX is invoked in batch mode (`run_journal` versus the NX Python the scripts expect). Confirm in M1.
+- Whether C# scripts over the pipe cover set-params, regen and post, or a C++ CHook is needed. Decided by spike S-MC, which runs right after M0 (spec §7).
+- How NX is invoked in batch mode (`run_journal` versus the NX Python the scripts expect). Decided by spike S-NX.
 - Plugin license: MIT is assumed, to match DSH Desktop.

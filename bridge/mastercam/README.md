@@ -38,7 +38,7 @@ The eight parameters the workflow edits — `feed`, `rpm`, `clearance`, `retract
 - `Mastercam.Database.Operation` is the type-agnostic entity (`FeedRate`, `SpindleSpeed`, `RetractRate`, `Linking` → `LinkingParams` with `Clearance`/`Retract`/`Depth`/`FeedPlane`/`TopStock`, `MiscValues` → 10 reals + 10 ints, `Commit()`, `Regenerate()`, `Post()`). **But no accessor returns one for a lathe op**: `SearchManager.GetOperation(id)`, `SearchManager.GetOperations()` (all overloads incl. group id and every `Lathe*` type), and `Typecaster.OperationCaster(id)` all returned null/empty on the Golden-B7 file (`probes/probe-access.csx`).
 - `Mastercam.Support.OpManagerSettings` exposes only Dirty/Ghosted/Locked/Selected/Visible flags — no parameters.
 
-Conclusion: parameter read/write and regeneration for lathe ops go through the **C++ CHook** (`operation_manager` `OPMGR_GET`/`OPMGR_SET`, `OPMGR_NCI_REGEN`), invoked from a `.csx` via the `Mastercam.dll` export `RunCHook` (`?RunCHook@@YA_NPEB_W_NPEAH@Z`). This is the same split CAPPtron uses: .NET for orchestration, CHook for lathe parameters. The CHook itself is built in S5, not in this spike.
+Conclusion: parameter read/write and regeneration for lathe ops go through the **C++ CHook** (`operation_manager` with `OPMGR_GET`, `OPMGR_REWRITE`, `OPMGR_NCI_FLAG`, `OPMGR_NCI_REGEN`), invoked from a `.csx` via the `Mastercam.dll` export `RunCHook` (`?RunCHook@@YA_NPEB_W_NPEAH@Z`). This is the same split CAPPtron uses: .NET for orchestration, CHook for lathe parameters. The smallest such CHook is in [`chook/`](chook/README.md) (spike task 6). Its source and portable tests exist, but it hasn't been built against the SDK or run in Mastercam yet, so this conclusion still rests on the .NET failures above plus CAPPtron's history, not on a 2026 CHook run.
 
 ## Non-working approaches (recorded so S5 doesn't retry them)
 
@@ -51,6 +51,8 @@ Conclusion: parameter read/write and regeneration for lathe ops go through the *
 - `probes/pipe-probe.mjs` — dependency-free pipe client (Node ≥ 18).
 - `probes/count-ops.csx`, `list-ops.csx`, `dump-op.csx`, `probe-access.csx` — read-only probes (`list-ops`/`dump-op`/`probe-access` confirmed the .NET accessors return empty for lathe ops; kept as the recorded evidence).
 - `probes/open-file.csx`, `post.csx` — verified working probes.
+- `probes/chook-param.csx` — calls the param-probe CHook through `RunCHook`; not run yet.
+- `chook/` — the param-probe CHook source, project and portable tests ([README](chook/README.md)).
 - .csx files contain `{{NAME}}` placeholders rendered by `pipe-probe.mjs --set NAME=VALUE`.
 
 All probe outputs stay on the Windows machine under the probe work dir; NC files and `.mcam` copies are never committed ([docs/assets.md](../../docs/assets.md)).

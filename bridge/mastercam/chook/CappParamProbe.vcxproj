@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Smallest CHook for spike S-MC task 6. Build: see README.md.
+     MastercamSdkRoot is passed with /p: and points at the Mastercam 2026 SDK root (outside the repo). -->
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{5C2B8E1A-3F47-4D0B-9E61-0A7C2D4B8F13}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0.22621.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v143</PlatformToolset>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <!-- SDK headers pull in MFC types. -->
+    <UseOfMfc>Dynamic</UseOfMfc>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <TargetName>CappParamProbe</TargetName>
+    <OutDir>$(MSBuildProjectDirectory)\bin\</OutDir>
+    <IntDir>$(MSBuildProjectDirectory)\obj\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <PreprocessorDefinitions>NOMINMAX;UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(MastercamSdkRoot);$(MastercamSdkRoot)\interfaces;$(MastercamSdkRoot)\interfaces\systypes;$(MastercamSdkRoot)\interfaces\Core;$(MastercamSdkRoot)\interfaces\CoreBase;$(MastercamSdkRoot)\interfaces\Database;$(MastercamSdkRoot)\interfaces\Math;$(MastercamSdkRoot)\interfaces\Mill;$(MastercamSdkRoot)\interfaces\GUI;$(MastercamSdkRoot)\interfaces\Graphics;$(MastercamSdkRoot)\NGP\Core\h;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(MastercamSdkRoot)\x64\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Mastercam.lib;SysTypes.lib;MCCore.lib;MCMill.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <TargetMachine>MachineX64</TargetMachine>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="param_probe.cpp" />
+    <ClInclude Include="probe_request.hpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="CheckSdkRoot" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(MastercamSdkRoot)'==''" Text="Pass /p:MastercamSdkRoot=&lt;Mastercam 2026 SDK root&gt;." />
+    <Error Condition="!Exists('$(MastercamSdkRoot)\interfaces\Core\3DVarsDefines_CH.h')" Text="MastercamSdkRoot has no interfaces\Core\3DVarsDefines_CH.h; is it the 2026 SDK root?" />
+    <Error Condition="!Exists('$(MastercamSdkRoot)\x64\release\Mastercam.lib')" Text="MastercamSdkRoot has no x64\release\Mastercam.lib." />
+  </Target>
+</Project>

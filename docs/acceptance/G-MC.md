@@ -8,6 +8,7 @@ Step: S-MC · Spec: §7 row S-MC
 - A copy of `torus-mcam` open in Mastercam (never the asset original).
 - Assets by logical id: `torus-mcam`, `mill-turn-post`.
 - Node ≥ 18 on the Windows machine for `probes/pipe-probe.mjs`.
+- For steps 5–8: VS 2022 Build Tools (v143, x64 MFC), Windows SDK 10.0.22621.0 and the Mastercam 2026 SDK; `bridge/mastercam/chook/` built per its README.
 
 ## Script
 
@@ -15,10 +16,17 @@ Step: S-MC · Spec: §7 row S-MC
 2. `pipe-probe.mjs open-file.csx --set MCAM_PATH=<copy>.mcam --set RESULT_PATH=<out>\open.json` → `"opened":true`.
 3. `pipe-probe.mjs post.csx --set POST_PATH=<mill-turn-post> --set NC_DIR=<empty dir> --set RESULT_PATH=<out>\post.json` → `"posted":true` and exactly one `.NC` file appears in the dir.
 4. Written verdict in `bridge/mastercam/README.md`: which parameters .NET can edit and which need the C++ CHook.
+5. Build `bridge/mastercam/chook/CappParamProbe.vcxproj` → `bin\CappParamProbe.dll`; `dumpbin /exports` lists `m_main` and `m_version`. Record any header or library the first build needed added.
+6. For each of the 7 operation ids, a read-only `chook-param.csx` run (request without `value`, fresh run dir each) → `receipt.json` has `"loaded":true,"return_code":0`; `result.json` has `"ok":true`, the operation's `opcode` and `before` values. This finds the lathe rough operation (opcode 60) and shows whether the field mapping reads plausible values.
+7. Post into an empty dir with `post.csx` (baseline at the template value). Then one write run on the lathe rough operation, `param=rough_step`, `value=0.4` → `result.json` `"ok":true`, `steps` ends with `"regen"`, `dirty_after_regen` is false, `after_regen.rough_step` is 0.4.
+8. Post again into another empty dir → one `.NC` file; compare it with step 7's baseline locally. The NC differs in the roughing passes. Neither NC is committed.
 
+Steps 5–8 were added after the first run below, which predates them.
 ## Pass criteria
 
-The script result shows the expected operation count; a written note settles C# only vs a C++ CHook; the post-processing call path is recorded.
+The script result shows the expected operation count; a written note settles C# only vs a C++ CHook; the post-processing call path is recorded. That's spec §7's G-MC.
+
+With steps 5–8 (execution plan, S-MC task 6), additionally: one lathe parameter is written through the CHook, regenerated and read back changed, and a post after the change succeeds. Until a run passes steps 5–8, the CHook route in spec A6 is a decision, not a demonstrated result.
 
 ## Runs
 

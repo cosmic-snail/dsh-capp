@@ -40,6 +40,25 @@ jobs:
         if: github.event_name == 'pull_request'
         run: git diff --check HEAD^1 HEAD
 
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - name: Install pnpm
+        run: npm install --global pnpm@${{ env.PNPM_VERSION }}
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: node scripts/check.mjs lint
+
   code:
     name: Code (${{ matrix.os }})
     strategy:

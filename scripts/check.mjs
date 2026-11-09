@@ -1,10 +1,11 @@
 // Explicit check groups for humans, agents, the git hook and CI. Report only: no auto-fix,
 // no implicit installs. Usage and scope: docs/development.md.
 //
-//   node scripts/check.mjs [docs] [types] [test] [pack] [install-hooks]
+//   node scripts/check.mjs [docs] [lint] [types] [test] [pack] [install-hooks]
 //
-// With no group, runs `docs`. `types`, `test` and `pack` call the root package.json scripts of
-// the same names (typecheck, test, build + pack), which arrive with the S0 workspace.
+// With no group, runs `docs`. `lint` calls `pnpm run lint`. `types`, `test` and `pack` call
+// the root package.json scripts of the same names (typecheck, test, build + pack), which
+// arrive with the S0 workspace.
 
 import { spawnSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
@@ -12,7 +13,7 @@ import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const GROUPS = ['docs', 'types', 'test', 'pack', 'install-hooks']
+const GROUPS = ['docs', 'lint', 'types', 'test', 'pack', 'install-hooks']
 const HOOKS_PATH = '.githooks'
 
 function run (group, cmd, args) {
@@ -48,6 +49,7 @@ function installHooks () {
 const steps = {
   docs: () => run('docs', process.execPath, ['scripts/check-docs.mjs']) ||
     run('docs', process.execPath, ['--test', '--test-reporter=dot', 'scripts/check-docs.test.mjs']),
+  lint: () => run('lint', 'pnpm', ['run', 'lint']),
   types: () => needWorkspace('types') ? run('types', 'pnpm', ['run', 'typecheck']) : 2,
   test: () => needWorkspace('test') ? run('test', 'pnpm', ['run', 'test']) : 2,
   pack: () => needWorkspace('pack') ? (run('pack', 'pnpm', ['run', 'build']) || run('pack', 'pnpm', ['run', 'pack'])) : 2,

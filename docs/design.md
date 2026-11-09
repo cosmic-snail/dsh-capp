@@ -258,7 +258,7 @@ The results go to `docs/experiments/planning-modes-<date>.md`. A mode-B plan tha
 
 | # | Deliverable | Done when |
 |---|---|---|
-| M0 | Repo, pnpm workspace, empty `capp-workbench` and `capp-schemas`, Windows dev setup notes | The panel loads in the forked DSH on the Windows machine; the asset manifest resolves locally |
+| M0 | Repo, pnpm workspace, empty `capp-workbench` and `capp-common`, Windows dev setup notes | The panel loads in the forked DSH on the Windows machine; the asset manifest resolves locally |
 | M1 | `capp-step` | The torus STEP gives a `part.json` with the expected features, called by the agent in a session |
 | M2 | `capp-planning` mode A + the process-card tab + Approve | The agent creates the 7-op plan, revises rough_step 0.5 → 0.4 on request, and the user approves in the panel |
 | M3 | Mastercam bridge + `capp-cam` (regen + post) | The approved plan yields `program.nc` for both rough_step values; the NC tab shows it |

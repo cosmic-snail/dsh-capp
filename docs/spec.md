@@ -357,6 +357,7 @@ These are not to be built: idempotency keys or command replay; recovery state ma
 - Unit tests (vitest) cover only the pure modules: `normalize`, `plan`, `request`, `nc`, plus `docs` and `paths` in common.
 - Fixtures are synthetic and hand-written (a fake two-op part and a toy template). Real torus data is never a fixture.
 - Every gate (§7) has a **manual acceptance script** in `docs/acceptance/G<n>.md`: steps, expected result, and a record of the actual run (date, DSH version, what was seen). Passing the script on the Windows machine **is** the gate.
+- Gates may drive the agent through the Harness command line (`headless --json` events are the evidence) on the Windows machine; steps that need the panel, including both human approvals, stay in DSH Desktop.
 
 ---
 
@@ -366,7 +367,7 @@ The order is driven by risk: the riskiest integration (Mastercam) gets spiked ri
 
 | Step | Work | Gate (pass on the Windows machine) |
 |---|---|---|
-| **S0 Skeleton** | Workspace, `build.mjs`/`pack.mjs`, `capp-common` stub, `capp-workbench` with an empty panel and a `capp_ping` tool (registered by the workbench, removed in S4) | **G0:** the `.tgz` installs via `install_local_workbench`; after a Harness restart, "CAPP" appears in the workbench switcher; the panel opens; the agent calls `capp_ping` and gets `pong` |
+| **S0 Skeleton** | Workspace, `build.mjs`/`pack.mjs`, `capp-common` stub, `capp-workbench` with an empty panel and a `capp_ping` tool (registered by the workbench, removed in S4) | **G0:** from the Harness command line, the `.tgz` installs, the `capp-workbench` row is composed, the agent calls `capp_ping` and gets `pong`, and the web profile serves `GET /api/capp/ping`; in DSH Desktop, the `.tgz` installs via `install_local_workbench`, and after a Harness restart "CAPP" appears in the workbench switcher and the panel shows "Server: ok" |
 | **S-MC Spike: Mastercam pipe** (time-box 2 days) | Node connects to `MastercamPipe<pid>`, sends a trivial C# script that returns the operation count of the open torus MCAM. Read the reference bridge for the regen and post API calls | **G-MC:** the script result shows the expected operation count. A written note settles C# only vs a C++ CHook, and the post-processing call path |
 | **S-NX Spike: NX batch** (time-box 1 day) | Run the external extractor on the torus STEP from the command line | **G-NX:** the reports are produced; the exact command line is recorded in `capp-step/README.md` |
 | **S1 Common** | Schemas, types, docs I/O, jobs index, `cappTool`, unit tests | **G1:** `pnpm test` is green; synthetic fixtures round-trip through `readDoc`/`writeDoc` |

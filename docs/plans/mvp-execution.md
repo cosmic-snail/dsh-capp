@@ -167,9 +167,9 @@ Each package lists: **Goal · Depends on · Files · Tasks · Unit tests · Gate
 **Tasks.**
 1. [any] Root workspace: set `packageManager: "pnpm@10.34.5"` and `engines.node: ">=22"`, and add the four root scripts from §2.3. Lock with `pnpm install`.
 2. [any] `tsconfig.base.json`: `strict`, `noUncheckedIndexedAccess`, `module: "ESNext"`, `moduleResolution: "Bundler"`, `target: "ES2023"`, `jsx: "react"`, `noEmit`, `skipLibCheck`. Use `@types/node` 22. For `@types/react`, pick 18.3: the host app pins React 18.3.1, while some host plugins declare React 19 peers, so use only APIs common to both (spec §1.1).
-3. [any] `capp-workbench` server (`src/index.ts`): `name = 'capp-workbench'`, `inject = ['tools', 'connection']`, `Config = Schema.object({})`.
+3. [any] `capp-workbench` server (`src/index.ts`): `name = 'capp-workbench'`, `inject = ['tools']`, `Config = Schema.object({})`.
    - Register the tool `capp_ping` with `defineTool` directly (`cappTool` arrives in S1): no parameters, returns `{ pong: true, version }`.
-   - Register `GET /api/capp/ping` returning `{ ok: true }`. This also confirms the routing fact in §1. Routing was read from the host source: exact pathnames only (spec §4.5).
+   - Register `GET /api/capp/ping` returning `{ ok: true }` inside `ctx.inject(['connection'], …)`: the TUI and headless profiles have no `connection` service, so the route exists only where the web UI does. Routing was read from the host source: exact pathnames only (spec §4.5).
 4. [any] `capp-workbench` client (`src/client/index.tsx`): `register({ title: 'CAPP', description: 'AI-native process planning (MVP)', customFrame: true, headerLayout: 'compact' }, Panel)`.
    - `Panel` renders a single `<header data-dsh-workbench-toolbar>` with the title, and a body that calls `/api/capp/ping` on mount and shows "Server: ok" or the error.
    - `inject: ['desktopWorkbenches']`, and the unregister goes into `ctx.effect` (workbench standard §3.5).
@@ -181,15 +181,7 @@ Each package lists: **Goal · Depends on · Files · Tasks · Unit tests · Gate
 
 **Unit tests.** None. vitest runs and finds none.
 
-**Gate G0 (script outline).**
-1. Copy `capp-workbench-<v>.tgz` to the Windows machine. In a DSH native session, ask the agent to install it with `install_local_workbench` → `application` is `applied` or `restart-required`.
-2. Restart Harness (top banner "Restart now" or Harness → Restart Harness) → no plugin recovery screen appears.
-3. Sidebar workbench switcher → "CAPP" is listed. Workbench management → Installed shows it marked "Local".
-4. Open CAPP → the panel shows "Server: ok". The toolbar sits correctly with the sidebar expanded and collapsed.
-5. Start a new session in the CAPP workbench and ask "call capp_ping" → the tool card shows `{ "pong": true, … }`.
-6. `dsh --profile web --dump-config` contains the `capp-workbench` row. Record only the row's id; no paths.
-
-**Pass criteria.** Steps 1–5 are observed as described, using the package hash recorded in the run.
+**Gate G0.** See [G0](../acceptance/G0.md) (part A on the command line, part B in DSH Desktop).
 **Out of scope.** Any CAPP logic, schemas or other plugins.
 
 ---

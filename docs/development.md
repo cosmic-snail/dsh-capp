@@ -1,6 +1,6 @@
 # Development checks, git hook and CI
 
-Every check here reports and exits non-zero on failure. None of them fixes files, installs tools for you, or runs DSH, NX or Mastercam. Acceptance happens only through the gates in [acceptance/](acceptance/README.md).
+Every check here reports and exits non-zero on failure. None of them fixes files, installs tools for you, or runs DSH, NX or Mastercam. Acceptance happens only through the gates in [acceptance/](acceptance/README.md); driving the Harness on the Windows machine from the command line is covered in [Harness from the command line](#harness-from-the-command-line).
 
 You need Node 22 LTS (22.13 or newer) and git. pnpm 10.34.5 is needed for every group (spec §1.2). The docs check and the hook have no dependencies, so they work on a fresh clone before `pnpm install`.
 
@@ -64,6 +64,19 @@ The Code and Pack jobs detect `pnpm-workspace.yaml` and skip their steps with a 
 A green run proves only these mechanical checks. It isn't a gate (except G1, which is defined as `pnpm test` green), and it says nothing about the Harness loading a plugin, NX output, Mastercam or NC.
 
 Which checks are required to merge is set in the branch protection or ruleset of `main`, not in this file. Check it with `gh api repos/cosmic-snail/dsh-capp/rulesets` or `gh api repos/cosmic-snail/dsh-capp/branches/main/protection`.
+
+## Harness from the command line
+
+On the Windows machine, `scripts/dsh-cli.cmd` runs the Harness that DSH Desktop v0.13.2 bundles — Electron in Node mode, the same way Desktop launches it — against a development `DSH_HOME`, separate from Desktop's own profile. `DSH_HOME` must be set first; the script refuses to run without it.
+
+```cmd
+dsh-cli plugin --profile headless add <absolute .tgz>
+dsh-cli --profile headless --dump-config
+dsh-cli --profile headless --json "<task>"
+dsh-cli --profile tui
+```
+
+`--json` prints NDJSON run events — the evidence for tool calls. The model comes from `DEEPSEEK_API_KEY` in the user environment; the default model is `deepseek-flash`. The `headless` and `tui` profiles have no `connection` service, so workbench HTTP routes and the panel exist only in `web` / DSH Desktop. Nothing here runs in CI.
 
 ## Line endings
 

@@ -4,7 +4,7 @@ import { CAPP_VERSION } from 'capp-common'
 import { registerRoutes, type WorkbenchContext } from './server'
 
 export const name = 'capp-workbench'
-export const inject = ['tools', 'connection']
+export const inject = ['tools']
 
 export const Config = Schema.object({})
 
@@ -35,5 +35,6 @@ function pingTool() {
 
 export function apply(ctx: WorkbenchContext) {
   ctx.tools.register(pingTool())
-  registerRoutes(ctx)
+  // The TUI and headless profiles have no connection service; routes register only where the web UI exists.
+  ctx.inject(['connection'], registerRoutes)
 }

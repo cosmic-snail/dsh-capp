@@ -8,7 +8,7 @@ const style = {
 }
 
 export default tseslint.config(
-  { ignores: ['node_modules/**', 'dist/**', 'lib/**', 'coverage/**', '.worktrees/**', 'capp-jobs/**'] },
+  { ignores: ['node_modules/**', 'dist/**', '**/lib/**', 'coverage/**', '.worktrees/**', 'capp-jobs/**'] },
   {
     files: ['**/*.{js,mjs,cjs}'],
     extends: [js.configs.recommended],
@@ -28,5 +28,11 @@ export default tseslint.config(
       globals: globals.node,
     },
     rules: style,
+  },
+  {
+    files: ['packages/*/src/client/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: globals.browser,
+    },
   },
 )

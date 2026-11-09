@@ -26,6 +26,8 @@ logs/
 node_modules/
 dist/
 *.tgz
+packages/*/lib/
+*.tsbuildinfo
 bridge/**/bin/
 bridge/**/obj/
 bridge/**/x64/

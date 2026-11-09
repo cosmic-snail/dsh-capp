@@ -2,7 +2,7 @@
 
 Every check here reports and exits non-zero on failure. None of them fixes files, installs tools for you, or runs DSH, NX or Mastercam. Acceptance happens only through the gates in [acceptance/](acceptance/README.md).
 
-You need Node 22 LTS (22.13 or newer) and git. pnpm 10.34.5 is needed for lint, and for the other groups once the S0 workspace exists (spec §1.2). The docs check and the hook have no dependencies, so they work on a fresh clone before `pnpm install`.
+You need Node 22 LTS (22.13 or newer) and git. pnpm 10.34.5 is needed for every group (spec §1.2). The docs check and the hook have no dependencies, so they work on a fresh clone before `pnpm install`.
 
 ## Check groups
 
@@ -15,7 +15,7 @@ node scripts/check.mjs pack            # root `pnpm run build`, then `pnpm run p
 node scripts/check.mjs install-hooks   # once per clone
 ```
 
-Groups run in the order given and stop at the first failure. Each command is printed with its exit code. `lint` calls the root `lint` script, which exists now. `types`, `test` and `pack` exit 2 with a clear message until S0 adds `pnpm-workspace.yaml`. S0 must define the root scripts `typecheck`, `test`, `build` and `pack` that these groups call ([spec §3](spec.md#3-directory-topology-and-module-boundaries)). The groups only call them, so the scripts stay the single definition.
+Groups run in the order given and stop at the first failure. Each command is printed with its exit code. `lint` calls the root `lint` script; `types`, `test` and `pack` call the root scripts `typecheck`, `test`, `build` and `pack` ([spec §3](spec.md#3-directory-topology-and-module-boundaries)). The groups only call them, so the scripts stay the single definition. If `pnpm-workspace.yaml` is missing, `types`, `test` and `pack` exit 2 with a clear message instead of running.
 
 ## Docs check
 
@@ -59,7 +59,7 @@ So a broken link staged while the working copy is fixed still fails, and an unst
 | Code | Ubuntu and Windows | `pnpm install --frozen-lockfile`, then `check.mjs types test`. Windows catches path and line-ending bugs in pure modules such as `inside()` |
 | Pack | Ubuntu | `check.mjs pack`, then uploads `dist/*.tgz` as a 14-day artifact. The `.tgz` files hold code only |
 
-Before S0 there's no workspace, so Code and Pack skip their steps and say so in the job summary. That is a visible skip, not a pass.
+The Code and Pack jobs detect `pnpm-workspace.yaml` and skip their steps with a visible note in the job summary when it's absent; a skip is not a pass.
 
 A green run proves only these mechanical checks. It isn't a gate (except G1, which is defined as `pnpm test` green), and it says nothing about the Harness loading a plugin, NX output, Mastercam or NC.
 

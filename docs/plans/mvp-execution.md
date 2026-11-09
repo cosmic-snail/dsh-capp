@@ -77,7 +77,7 @@ These were read from the forked host at Harness `0.2.2-alpha.2`. The S0 executor
 | Workbench `package.json` needs `dsh.bundle.patch`, `dsh.client.platform: "web"`, `dsh.client.inject` **including `dsh-desktop-workbenches`**, and `exports["./client"]`. `@deepseek-ai/*` packages are peerDependencies | workbench standard §3.2 |
 | Local install: the agent calls `install_local_workbench({ path, replace })` with an absolute `.tgz` path. The result's `application` is `applied` or `restart-required`; anything else is a failure | workbench standard §3.6 |
 
-**Spec amendment to make in S0 if the routing fact holds:** spec §4.5 shows REST-style paths (`/api/capp/jobs/:id`). If `connection.fetch.register` only matches exact paths, use flat paths with query parameters: `GET /api/capp.jobs`, `GET /api/capp.job?id=`, `GET /api/capp.plan?id=&revision=`, `GET /api/capp.nc?id=&run=&from=&count=`, `POST /api/capp.approve?id=`, `POST /api/capp.nc-review?id=`. Update spec §4.5 and design §7.4 in the S0 PR, with the observed behavior as the reason.
+The routing fact held: `connection.fetch.register` matches exact pathnames only, so spec §4.5 and design §7.4 now use exact `/api/capp/<name>` paths with query-string ids. The `/api/capp/` prefix stays because of workbench standard §3.4.
 
 ## 2. Conventions shared by every package
 
@@ -169,9 +169,9 @@ Each package lists: **Goal · Depends on · Files · Tasks · Unit tests · Gate
 2. [any] `tsconfig.base.json`: `strict`, `noUncheckedIndexedAccess`, `module: "ESNext"`, `moduleResolution: "Bundler"`, `target: "ES2023"`, `jsx: "react"`, `noEmit`, `skipLibCheck`. Use `@types/node` 22. For `@types/react`, pick 18.3: the host app pins React 18.3.1, while some host plugins declare React 19 peers, so use only APIs common to both (spec §1.1).
 3. [any] `capp-workbench` server (`src/index.ts`): `name = 'capp-workbench'`, `inject = ['tools', 'connection']`, `Config = Schema.object({})`.
    - Register the tool `capp_ping` with `defineTool` directly (`cappTool` arrives in S1): no parameters, returns `{ pong: true, version }`.
-   - Register `GET /api/capp.ping` returning `{ ok: true }`. This also confirms the routing fact in §1. Try registering one path with a `:id` segment, record what happens, then remove it.
+   - Register `GET /api/capp/ping` returning `{ ok: true }`. This also confirms the routing fact in §1. Routing was read from the host source: exact pathnames only (spec §4.5).
 4. [any] `capp-workbench` client (`src/client/index.tsx`): `register({ title: 'CAPP', description: 'AI-native process planning (MVP)', customFrame: true, headerLayout: 'compact' }, Panel)`.
-   - `Panel` renders a single `<header data-dsh-workbench-toolbar>` with the title, and a body that calls `/api/capp.ping` on mount and shows "Server: ok" or the error.
+   - `Panel` renders a single `<header data-dsh-workbench-toolbar>` with the title, and a body that calls `/api/capp/ping` on mount and shows "Server: ok" or the error.
    - `inject: ['desktopWorkbenches']`, and the unregister goes into `ctx.effect` (workbench standard §3.5).
 5. [any] `scripts/build.mjs` and `scripts/pack.mjs` per §2.3–2.4. `node scripts/check.mjs types test pack` must pass. Have vitest find no tests yet and exit 0 (use `passWithNoTests` in config).
 6. [any] Inspect the `.tgz`: `tar -tzf dist/capp-workbench-0.0.1.tgz` lists `package.json`, `lib/index.js`, `lib/client.js` and `cordis.patch.yml`. The packed `package.json` has no `capp-common` runtime dependency.
@@ -472,7 +472,7 @@ Also `fixtures/nx-report.synthetic.json` and `fixtures/analysis.synthetic.json`:
 - `test/server.test.ts` for the pure request handlers, with handlers taking `(job, body)` so they can be tested without the host.
 
 **Tasks.**
-1. [any] Remove `capp_ping` and `/api/capp.ping`.
+1. [any] Remove `capp_ping` and `/api/capp/ping`.
 2. [any] Endpoints per spec §4.5, in the path style S0 settled.
    - `approve` reads the current `plan.json` and checks that `revision` equals the requested revision. If they differ, it returns 409 "The plan changed; review r<n>". It then writes `approval.json` with the plan's sha256. This is the **only** writer (G7).
    - The response bodies are the documents themselves.

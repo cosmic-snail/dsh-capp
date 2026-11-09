@@ -250,18 +250,19 @@ Bridge script contract: each `*.csx.tpl` receives absolute paths only (`request.
 ### 4.5 `capp-workbench`
 
 ```ts
-// server endpoints (all JSON, all under /api/capp)
-GET  /api/capp/jobs                              → { jobs: [{ id, label, updated_at }] }
-GET  /api/capp/jobs/:id                          → { part?, plan?, revisions: number[], approval?, runs: CamStatus[], nc_review? }
-GET  /api/capp/jobs/:id/plan?revision=n          → Plan
-GET  /api/capp/jobs/:id/runs/:run/nc?from&count  → { total_lines, lines }
-POST /api/capp/jobs/:id/approve                  { revision } → Approval        // writes approval.json
-POST /api/capp/jobs/:id/nc-review                { run, decision, note } → NcReview
+// server endpoints: exact paths under /api/capp; ids and options go in the query string
+GET  /api/capp/ping                                      → { ok: true }          // S0 only, removed in S4
+GET  /api/capp/jobs                                      → { jobs: [{ id, label, updated_at }] }
+GET  /api/capp/job?id=                                   → { part?, plan?, revisions: number[], approval?, runs: CamStatus[], nc_review? }
+GET  /api/capp/plan?id=&revision=                        → Plan
+GET  /api/capp/nc?id=&run=&from=&count=                  → { total_lines, lines }
+POST /api/capp/approve?id=          { revision }         → Approval        // writes approval.json
+POST /api/capp/nc-review?id=        { run, decision, note } → NcReview
 // client
 register({ title: 'CAPP', customFrame: true, headerLayout: 'compact' }, CappPanel)   // tabs: Part · Process card · NC
 ```
 
-The panel polls `GET /jobs/:id` every 2 s while a CAM run is `running`. No websockets.
+`connection.fetch.register` matches the exact pathname only (Harness 0.2.2-alpha.2, `@deepseek-ai/dsh-client-connection`), so a path segment such as `:id` is literal text, not a parameter. The `/api/capp/` prefix follows workbench standard §3.4 (endpoints under the workbench's own prefix). The panel polls `GET /api/capp/job?id=` every 2 s while a CAM run is `running`. No websockets.
 
 ---
 

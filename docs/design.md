@@ -217,7 +217,7 @@ This is a client panel (`customFrame: true`, business-first) with three tabs:
 - **Process card:** the operations table of the current revision, a revision picker, and the **Approve** button.
 - **NC:** the run list, the NC viewer, and the **Approve NC / Reject** buttons.
 
-Its server half owns the `/api/capp` endpoints (`GET /jobs`, `GET /jobs/:id`, `POST /jobs/:id/approve`, `POST /jobs/:id/nc-review`; see spec §4.5). These are the only writers of `approval.json` and `nc-review.json`. The host's native `conversation` node is embedded for AI help.
+Its server half owns the `/api/capp` endpoints (`GET /api/capp/jobs`, `GET /api/capp/job?id=`, `POST /api/capp/approve?id=`, `POST /api/capp/nc-review?id=`; see spec §4.5). These are the only writers of `approval.json` and `nc-review.json`. The host's native `conversation` node is embedded for AI help.
 
 ## 8. Open-source boundary
 

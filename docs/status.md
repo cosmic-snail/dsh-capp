@@ -2,11 +2,11 @@
 
 Describes `main` only. Unmerged work lives in its PR. Update a row when its step merges or its gate result changes; dated evidence goes in [acceptance/](acceptance/README.md). Steps and gates are defined in [spec §7](spec.md#7-implementation-plan-and-acceptance-gates).
 
-Baseline: design, spec, asset boundary and the development pipeline (docs check, git hook, CI). No plugin code yet.
+Baseline: design, spec, asset boundary and the development pipeline (docs check, git hook, CI). S0 adds the pnpm workspace and the `capp-workbench` skeleton (tool `capp_ping`, `/api/capp/ping`, minimal panel).
 
 | Step | State on `main` | Gate | Evidence |
 |---|---|---|---|
-| S0 Skeleton | Not started | G0 not run | none |
+| S0 Skeleton | Done | G0 passed | [G0](acceptance/G0.md) 2026-11-09, commit `4d7d37d` |
 | S-MC Mastercam pipe spike | Not started | G-MC not run | none |
 | S-NX NX batch spike | Not started | G-NX not run | none |
 | S1 Common | Not started | G1 not run | none |

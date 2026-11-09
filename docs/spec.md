@@ -40,7 +40,7 @@ There is exactly one supported environment: **Windows 11 x64**, an interactive d
 - **Siemens NX 2306** (the version the external extractor targets). Batch invocation is decided: `run_journal.exe` (spec §8, S-NX).
 - **Mastercam 2026** (SDK `C_H_VERSION 2800`), running interactively with the user signed in. The Chinese UI is the only tested UI language.
 - **External assets** from the private Drive folder, synced to a local directory outside the repo (see [assets.md](assets.md)).
-- **Optional:** VS 2022 Build Tools (v143, x64 MFC) and Windows SDK 10.0.22621.0. Required only if spike S-MC shows a C++ CHook is unavoidable.
+- **VS 2022 Build Tools** (v143, x64 MFC) and Windows SDK 10.0.22621.0. Required: spike S-MC showed the lathe CHook is unavoidable (spec §8).
 
 Development may happen on macOS (build, unit tests, packing). **Acceptance gates are only ever passed on the Windows machine.** Machine names, addresses and credentials never appear in the repo.
 
@@ -82,7 +82,7 @@ The plugins **never call an LLM**. The Harness agent, configured in DSH Desktop 
 | A3 | **Approval writes happen only in `capp-workbench` HTTP endpoints**, called by panel buttons | Approval is human-only by construction: no tool exists that can write it |
 | A4 | **Jobs live in the session workspace**, with a global index under `DSH_HOME` | The agent sees the files in its workspace, and the panel finds jobs through the index without depending on unconfirmed client workspace APIs |
 | A5 | **CAM runs are background tasks** in the `capp-cam` process, one at a time, with progress in `status.json` | Mastercam can do one thing at a time; tool calls must not block for minutes. Spike S-JOBS decides whether the host `jobs` service replaces our runner |
-| A6 | **Mastercam is driven from Node over its own named pipe**, by sending C# scripts generated from templates in `bridge/mastercam/` | No PowerShell layer, and no C++ unless S-MC proves it's needed |
+| A6 | **Mastercam is driven from Node over its own named pipe**, by sending C# scripts generated from templates in `bridge/mastercam/`; lathe parameters go through a C++ CHook invoked from those scripts | No PowerShell layer; S-MC proved C# alone cannot reach lathe operation parameters |
 | A7 | **The plugins have no LLM code** (§1.4) | Keeps the intelligence in the agent and skills |
 
 ---
@@ -390,7 +390,7 @@ Rules for every step:
 
 | ID | Question | Decided in |
 |---|---|---|
-| S-MC | C# scripts over the pipe are enough for set-params, regen and post, or a C++ CHook is needed | S-MC |
+| S-MC | **Decided:** C# over the pipe covers count/open/post, but lathe operation parameters are unreachable from .NET — a C++ CHook is required for set-params and regen. Verdict and API details: `bridge/mastercam/README.md`, G-MC | S-MC |
 | S-NX | **Decided:** `run_journal.exe <journal.py>` is the batch entry; it needs `UGII_BASE_DIR`, `UGII_LANG`, `SPLM_LICENSE_SERVER` (system env on the Windows machine); `UGS_LICENSE_BUNDLE` not required. Verdict and command line: `packages/capp-step/README.md`, G-NX | S-NX |
 | S-JOBS | Use the host `jobs` service (`@deepseek-ai/dsh-jobs`) for CAM runs instead of our runner | During S5, only if it simplifies; the default is our runner |
 | S-WS | Can the client get the current session workspace from host APIs? If yes, the panel filters jobs by workspace; if no, the global index stays | S4 |

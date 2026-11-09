@@ -26,10 +26,10 @@ Contents: §1 tech stack and environment · §2 architecture · §3 directory to
 | Language | TypeScript **5.9.3**, `strict`, `noUncheckedIndexedAccess`, ESM, target ES2023 |
 | Bundler | esbuild **0.25.12**: server → one ESM file per plugin; client → one IIFE file wrapped in `window.__ModuleLoader__.load` |
 | Package manager | pnpm **10.34.5** workspace (the `dsh-capp` repo only; the fork keeps npm) |
-| Dev Node (build and test only) | Node 22 LTS |
+| Dev Node (build, test, and lint) | Node 22 LTS, **22.13** or newer |
 | Tests | vitest **4.x**, for pure modules only |
 | JSON validation | ajv **8.x** (draft 2020-12), bundled into each plugin |
-| Lint/format | none in the MVP beyond `tsc --noEmit`. Style rules are in §6 |
+| Lint | ESLint **10.14.0**, typescript-eslint **8.72.1**. No formatter. Single quotes and no semicolons (§6.1), plus ESLint recommended |
 
 `@deepseek-ai/*` packages are **peerDependencies** at the exact versions above, plus `devDependencies` for types. They are never bundled.
 
@@ -91,7 +91,7 @@ The plugins **never call an LLM**. The Harness agent, configured in DSH settings
 
 ```text
 dsh-capp/
-├── package.json              # private workspace root: scripts build/test/pack
+├── package.json              # private workspace root: scripts lint/build/test/pack
 ├── pnpm-workspace.yaml       # packages/*
 ├── tsconfig.base.json
 ├── scripts/

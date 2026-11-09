@@ -28,10 +28,11 @@
   ```sh
   node scripts/check.mjs install-hooks   # once per clone
   node scripts/check.mjs docs            # always
+  node scripts/check.mjs lint            # after pnpm install
   node scripts/check.mjs types test      # once the S0 workspace exists
   ```
 
-- Pick verification by what changed. Docs-only: facts, links and the full diff. Code: typecheck and unit tests for pure modules. Anything touching NX, Mastercam, the host or a skill the Harness loads: the step's acceptance gate on the Windows machine ([docs/acceptance/README.md](docs/acceptance/README.md)). Report what actually ran, where, and what didn't. Never reuse an old result as a new pass.
+- Pick verification by what changed. Docs-only: facts, links and the full diff. Code: lint, then typecheck and unit tests for pure modules. Anything touching NX, Mastercam, the host or a skill the Harness loads: the step's acceptance gate on the Windows machine ([docs/acceptance/README.md](docs/acceptance/README.md)). Report what actually ran, where, and what didn't. Never reuse an old result as a new pass.
 
 ## On-demand skills
 

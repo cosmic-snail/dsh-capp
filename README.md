@@ -23,7 +23,7 @@ Part data, CAM templates, post-processors, NX scripts and vendor SDKs are privat
 
 ## Development
 
-Agents and humans start at [AGENTS.md](AGENTS.md). After cloning, run `node scripts/check.mjs install-hooks` once (Node 22). Checks, the git hook and CI are described in [docs/development.md](docs/development.md); current state is in [docs/status.md](docs/status.md).
+Agents and humans start at [AGENTS.md](AGENTS.md). After cloning, run `pnpm install` and `node scripts/check.mjs install-hooks` once (Node 22.13 or newer, pnpm 10.34.5). Checks, the git hook and CI are described in [docs/development.md](docs/development.md); current state is in [docs/status.md](docs/status.md).
 
 ## License
 

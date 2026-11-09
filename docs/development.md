@@ -2,19 +2,20 @@
 
 Every check here reports and exits non-zero on failure. None of them fixes files, installs tools for you, or runs DSH, NX or Mastercam. Acceptance happens only through the gates in [acceptance/](acceptance/README.md).
 
-You need Node 22 LTS and git. pnpm 10.34.5 is needed once the S0 workspace exists (spec §1.2). The docs check and the hook have no dependencies, so they work on a fresh clone before `pnpm install`.
+You need Node 22 LTS (22.13 or newer) and git. pnpm 10.34.5 is needed for lint, and for the other groups once the S0 workspace exists (spec §1.2). The docs check and the hook have no dependencies, so they work on a fresh clone before `pnpm install`.
 
 ## Check groups
 
 ```sh
 node scripts/check.mjs                 # same as: docs
 node scripts/check.mjs docs            # docs checker + its self-tests
+node scripts/check.mjs lint            # root `pnpm run lint`
 node scripts/check.mjs types test      # root `pnpm run typecheck`, `pnpm run test`
 node scripts/check.mjs pack            # root `pnpm run build`, then `pnpm run pack`
 node scripts/check.mjs install-hooks   # once per clone
 ```
 
-Groups run in the order given and stop at the first failure. Each command is printed with its exit code. `types`, `test` and `pack` exit 2 with a clear message until S0 adds `pnpm-workspace.yaml`. S0 must define the root scripts `typecheck`, `test`, `build` and `pack` that these groups call ([spec §3](spec.md#3-directory-topology-and-module-boundaries)). The groups only call them, so the scripts stay the single definition.
+Groups run in the order given and stop at the first failure. Each command is printed with its exit code. `lint` calls the root `lint` script, which exists now. `types`, `test` and `pack` exit 2 with a clear message until S0 adds `pnpm-workspace.yaml`. S0 must define the root scripts `typecheck`, `test`, `build` and `pack` that these groups call ([spec §3](spec.md#3-directory-topology-and-module-boundaries)). The groups only call them, so the scripts stay the single definition.
 
 ## Docs check
 
@@ -29,6 +30,12 @@ Groups run in the order given and stop at the first failure. Each command is pri
 
 [`check-docs.test.mjs`](../scripts/check-docs.test.mjs) runs with node's built-in test runner and covers each rule on throwaway trees. The asset boundary isn't enforced here: `.gitignore` plus review is the only asset guard (spec G8). Passing the docs check doesn't make the facts in the docs right.
 
+## Lint
+
+`node scripts/check.mjs lint` runs `pnpm run lint`, which is ESLint on every JS and TS file (spec §1.2). Install first with `pnpm install`. It enforces ESLint recommended plus the mechanical house style from spec §6.1: single quotes, no semicolons. Indent, naming, and `tsc --noEmit` stay outside this check. There is no formatter, and the command does not fix files.
+
+The git hook does not run lint. The index snapshot has no `node_modules`.
+
 ## Git hook
 
 `node scripts/check.mjs install-hooks` sets `core.hooksPath=.githooks` for the clone and all its worktrees. If `core.hooksPath` is already set to something else, it reports that and changes nothing.
@@ -39,7 +46,7 @@ Groups run in the order given and stop at the first failure. Each command is pri
 2. Runs `git diff --cached --check` (trailing whitespace, conflict markers).
 3. Exports the complete index to a temporary directory with `git checkout-index` and runs the staged docs checker against it, then deletes the snapshot.
 
-So a broken link staged while the working copy is fixed still fails, and an unstaged new target doesn't count. Fix in the working tree, re-stage and commit again. The hook doesn't run typecheck or unit tests, because the snapshot has no `node_modules`; run `types test` yourself before pushing. It's a consistency check, not a tamper-proof boundary: anyone can skip it with `--no-verify`. If you do, say why in the PR. CI runs the same docs check regardless.
+So a broken link staged while the working copy is fixed still fails, and an unstaged new target doesn't count. Fix in the working tree, re-stage and commit again. The hook doesn't run lint, typecheck, or unit tests, because the snapshot has no `node_modules`; run `lint` and, once the workspace exists, `types test` yourself before pushing. It's a consistency check, not a tamper-proof boundary: anyone can skip it with `--no-verify`. If you do, say why in the PR. CI runs the docs check and lint regardless.
 
 ## CI
 
@@ -48,6 +55,7 @@ So a broken link staged while the working copy is fixed still fails, and an unst
 | Job | Runner | What it runs |
 |---|---|---|
 | Docs | Ubuntu | `node scripts/check.mjs docs`; on PRs also `git diff --check` over the PR's changes |
+| Lint | Ubuntu | `pnpm install --frozen-lockfile`, then `check.mjs lint` |
 | Code | Ubuntu and Windows | `pnpm install --frozen-lockfile`, then `check.mjs types test`. Windows catches path and line-ending bugs in pure modules such as `inside()` |
 | Pack | Ubuntu | `check.mjs pack`, then uploads `dist/*.tgz` as a 14-day artifact. The `.tgz` files hold code only |
 

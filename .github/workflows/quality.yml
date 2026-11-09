@@ -1,0 +1,120 @@
+name: Quality
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: quality-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+# Public repo: GitHub-hosted runners only, read-only token, no secrets.
+# Why: .agents/notes/implemented/2026-11-08-hosted-ci-public-repo.md
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '10.34.5'
+
+jobs:
+  docs:
+    name: Docs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # The PR merge commit plus its first parent, for the whitespace check.
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - name: Docs check
+        run: node scripts/check.mjs docs
+      - name: Whitespace and conflict markers in this PR
+        if: github.event_name == 'pull_request'
+        run: git diff --check HEAD^1 HEAD
+
+  code:
+    name: Code (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Detect workspace
+        id: ws
+        run: |
+          if [ -f pnpm-workspace.yaml ]; then echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "Skipped: no pnpm workspace before spec step S0. Nothing was type-checked or tested." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/setup-node@v6
+        if: steps.ws.outputs.present == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - name: Install pnpm
+        if: steps.ws.outputs.present == 'true'
+        run: npm install --global pnpm@${{ env.PNPM_VERSION }}
+      - name: Install dependencies
+        if: steps.ws.outputs.present == 'true'
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck and unit tests
+        if: steps.ws.outputs.present == 'true'
+        run: node scripts/check.mjs types test
+
+  pack:
+    name: Pack
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Detect workspace
+        id: ws
+        run: |
+          if [ -f pnpm-workspace.yaml ]; then echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "Skipped: no pnpm workspace before spec step S0. Nothing was packed." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/setup-node@v6
+        if: steps.ws.outputs.present == 'true'
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          package-manager-cache: false
+      - name: Install pnpm
+        if: steps.ws.outputs.present == 'true'
+        run: npm install --global pnpm@${{ env.PNPM_VERSION }}
+      - name: Install dependencies
+        if: steps.ws.outputs.present == 'true'
+        run: pnpm install --frozen-lockfile
+      - name: Build and pack plugins
+        if: steps.ws.outputs.present == 'true'
+        run: node scripts/check.mjs pack
+      - name: Note what the artifact is
+        if: steps.ws.outputs.present == 'true'
+        run: echo "Plugin .tgz files built from ${GITHUB_SHA}. Code only; installing them in DSH and passing a gate is a separate, manual step." >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v7
+        if: steps.ws.outputs.present == 'true'
+        with:
+          name: plugins-${{ github.sha }}
+          path: dist/*.tgz
+          if-no-files-found: error
+          retention-days: 14

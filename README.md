@@ -21,6 +21,10 @@ Status: **design / MVP**. Target: one fixed torus part end to end on Windows. Se
 
 Part data, CAM templates, post-processors, NX scripts and vendor SDKs are private or vendor-licensed. See [docs/assets.md](docs/assets.md) and `assets/manifest.example.json`.
 
+## Development
+
+Agents and humans start at [AGENTS.md](AGENTS.md). After cloning, run `node scripts/check.mjs install-hooks` once (Node 22). Checks, the git hook and CI are described in [docs/development.md](docs/development.md); current state is in [docs/status.md](docs/status.md).
+
 ## License
 
 MIT

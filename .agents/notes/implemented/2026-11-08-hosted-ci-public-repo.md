@@ -26,4 +26,4 @@ CI never proves anything about DSH, NX, Mastercam or NC; that's carried entirely
 
 ## Evidence and gaps
 
-Local: `node scripts/check.mjs docs` and its nine self-tests pass on Linux with Node 22; the hook was exercised against a staged broken link and a staged fix. The first Quality run on this branch's PR is the CI evidence; the Code and Pack steps have not run real work yet because there is no workspace before S0. The Windows runner leg has not executed a TypeScript build yet.
+Local: `node scripts/check.mjs docs` and its nine self-tests pass on Linux with Node 22; the hook was exercised against a staged broken link and a staged fix. CI: Quality run 42551933031 (pull_request, commit `dc94e32`, PR #2) passed Docs, Code on Ubuntu and Windows, and Pack. Gap: Code and Pack only exercised their skip path because there is no workspace before S0, so neither runner has built or tested TypeScript yet. Re-check both legs in the S0 PR.

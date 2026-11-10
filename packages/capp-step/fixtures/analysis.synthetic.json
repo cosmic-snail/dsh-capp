@@ -35,7 +35,7 @@
         }
       ],
       "feature_groups": [
-        { "feature_id": "MF_BORE_GROUP_001", "type": "stepped_through_bore", "diameter": 30.0 }
+        { "feature_id": "MF_BORE_GROUP_001", "type": "stepped_through_bore", "diameter": 30.0, "axis": { "axis_id": "AX_PRIMARY" } }
       ]
     }
   },

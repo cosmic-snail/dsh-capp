@@ -1,5 +1,5 @@
 # journal.py.tpl — NX batch journal for capp-step (S-NX spike).
-# {{NAME}} placeholders become absolute paths at render time.
+# Double-brace placeholders become absolute paths at render time.
 # Imports STEP via the STEP214 importer, runs the extractor on the work
 # part, and writes nx-report.json into OUT_DIR.
 import os

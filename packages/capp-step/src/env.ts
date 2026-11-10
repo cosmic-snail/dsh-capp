@@ -28,6 +28,10 @@ const OPTIONAL_VARS = ['UGS_LICENSE_BUNDLE'] as const
 async function regQuery(ctx: SubprocessContext, name: string): Promise<string | undefined> {
   const child = ctx.subprocess.spawn({
     argv: ['reg', 'query', 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment', '/v', name],
+    cwd: process.cwd(),
+    env: process.env as Record<string, string>,
+    signal: new AbortController().signal,
+    graceMs: 10_000,
     stdio: { stdout: { maxBytes: 8192 }, stderr: { maxBytes: 2048 } },
   })
   const { exitCode } = await child.done

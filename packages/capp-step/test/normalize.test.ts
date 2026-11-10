@@ -49,6 +49,27 @@ describe('normalize', () => {
     expect(part.raw).toEqual(['nx/nx-report.json', 'nx/analysis.json'])
   })
 
+  it('merges duplicate type+params records (split-face import) but keeps distinct faces', () => {
+    const dupAnalysis = JSON.parse(JSON.stringify(analysis))
+    const feats = dupAnalysis.manufacturing_model.turning.features
+    feats.push({ feature_id: 'MF_005', type: 'external_cylindrical_surface', diameter: 41.0, radius: 20.5, length: 5.0 })
+    feats.push({ feature_id: 'MF_006', type: 'negative_axis_end_face' })
+    dupAnalysis.manufacturing_model.turning.feature_groups.push({
+      feature_id: 'MF_BORE_GROUP_002', type: 'stepped_through_bore', diameter: 30.0, axis: { axis_id: 'AX_PRIMARY' },
+    })
+    const part = normalize(
+      [
+        { name: 'nx/nx-report.json', json: nxReport },
+        { name: 'nx/analysis.json', json: dupAnalysis },
+      ],
+      SOURCE,
+    )
+    const types = part.features.map((f) => f.type)
+    // dup outer cyl + dup bore group merged; 2 end faces kept (different nx_type)
+    expect(types).toEqual(['cylinder_outer', 'cylinder_inner', 'plane_face', 'plane_face', 'hole'])
+    expect(part.warnings?.some((w) => w.includes('duplicate cylinder_outer'))).toBe(true)
+  })
+
   it('survives missing reports with warnings and empty features', () => {
     const part = normalize([{ name: 'nx/empty.json', json: {} }], SOURCE)
     expect(part.features).toEqual([])

@@ -56,6 +56,7 @@ export function normalize(reports: ReportInput[], source: NormalizeSource): Part
     ? analysisObj.manufacturing_model.turning
     : {}
   const rawFeatures = [...asArray(turning.features), ...asArray(turning.feature_groups)]
+  const seen = new Map<string, number>()
   for (const raw of rawFeatures) {
     if (!isObj(raw)) continue
     const nxType = typeof raw.type === 'string' ? raw.type : undefined
@@ -65,6 +66,18 @@ export function normalize(reports: ReportInput[], source: NormalizeSource): Part
       continue
     }
     const params = pickParams(raw)
+    // NX splits faces (e.g. a cylinder into half-faces, a bore into per-half
+    // groups); records identical in mapped type, NX type, axis and params are
+    // the same feature reported twice. Distinct end faces differ by nx_type,
+    // bores on different axes differ by axis_id — both survive.
+    const axis = isObj(raw.axis) && typeof raw.axis.axis_id === 'string' ? raw.axis.axis_id : ''
+    const dedupeKey = `${mapped}|${nxType}|${axis}|${params ? JSON.stringify(params) : ''}`
+    const prev = seen.get(dedupeKey)
+    if (prev !== undefined) {
+      warnings.push(`duplicate ${mapped} record merged (split-face import)`)
+      continue
+    }
+    seen.set(dedupeKey, features.length + 1)
     features.push({
       id: `f${features.length + 1}`,
       type: mapped,

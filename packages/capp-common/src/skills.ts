@@ -31,7 +31,7 @@ export function registerSkills(
   skills: SkillEntry[],
 ): void {
   const base = dirUrl.endsWith('/') ? dirUrl : `${dirUrl}/`
-  const candidates: SkillCandidate[] = skills.map((s) => {
+  const candidates: Array<SkillCandidate & { locator: URL }> = skills.map((s) => {
     const locator = new URL(`${s.name}/SKILL.md`, base)
     return {
       name: s.name,
@@ -50,8 +50,8 @@ export function registerSkills(
     get: async (selected: SkillCandidate): Promise<SkillDefinition | undefined> => {
       const hit = candidates.find((c) => c.name === selected.name)
       if (!hit) return undefined
-      const content = (await readFile(hit.locator as URL, 'utf8')).replace(FRONTMATTER, '').trim()
-      return { ...hit, content } as SkillDefinition
+      const content = (await readFile(hit.locator, 'utf8')).replace(FRONTMATTER, '').trim()
+      return { ...hit, content }
     },
   }
   ctx.skills.registerProvider(() => skillProvider)

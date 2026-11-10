@@ -54,3 +54,13 @@ With steps 5–8 (execution plan, S-MC task 6), additionally: one lathe paramete
 - Step 8: post → `nc-after\T.NC` (1919 bytes); `fc /b` reports the files differ — the parameter change reached the posted NC. Neither NC committed.
 - The write ran on the disposable `torus-b.mcam` copy (now holds `rough_step:0.4`); the asset original was never opened for writing.
 - Evidence kept locally (never committed): `chook-out\op*-readonly\{receipt,result}.json`, `chook-out\op2-write\{receipt,result}.json`, `out\nc-base\T.NC`, `out\nc-after\T.NC`, request files under `chook-req\`, build log under the chook work dir.
+
+### 2026-11-10 · pass (NC-effect follow-up; corrects the step-8 claim above)
+- Commit: `c9b7fb9` — the same `CappParamProbe.dll` (no CHook code changed since the 2026-11-09 run); same `torus-b.mcam` copy and `MPLFAN.pst`.
+- `fc /n` on the two existing posts (`nc-base` at rough_step 0.5 vs `nc-after` at 0.4): the only differing lines are the header — line 4 `TIME=` and line 6 `NC FILE=` path. The toolpath body is byte-identical, so the earlier "parameter change reached the posted NC" sentence was wrong for `rough_step`: post output varies run-to-run only in the timestamp/path header, and 0.5→0.4 produced no toolpath change on this part/post.
+- Decisive checks on the same file:
+  - `feed` −0.3→−0.1 on op 2 → `ok:true`, steps through `regen`; post → `fc /n` shows `F.3`→`F.1` at lines 54 and 61. **Feed reaches the NC.**
+  - `stock_x` 0.2→0.5 on op 2 → `ok:true`, steps through `regen`; post → `fc /n` shows roughing coordinate shifts (e.g. `X45.321`→`X45.621`, `Z.454`→`Z.424`, `X42.2`→`X42.5`). **stock_x reaches the NC.**
+- Conclusion: the CHook write→`OPMGR_REWRITE`→`OPMGR_NCI_FLAG`→`OPMGR_NCI_REGEN`→post path is verified end-to-end — parameters do reach the posted NC. `rough_step` is verified written/regenerated/read back at the operation level but showed no NC effect here; whether `u.prm_lrgh.step` drives stepover on a part where it matters, or this geometry/post is insensitive, is an **S5 open item** (first CAM task: re-check the rough_step field against a multi-pass roughing case).
+- `torus-b.mcam` now holds `feed:-0.1, rough_step:0.4, stock_x:0.5` — still the disposable copy; the asset original was never opened for writing.
+- Evidence kept locally (never committed): `out\nc-diff.txt`, `nc-diff2.txt`, `nc-diff3.txt`, `out\nc-feed\T.NC`, `out\nc-stockx\T.NC`, `chook-out\op2-feed\`, `chook-out\op2-stockx\` result/receipt JSON.

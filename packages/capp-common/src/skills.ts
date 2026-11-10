@@ -16,7 +16,7 @@ export interface SkillProviderInfo {
   name: string
 }
 
-interface SkillsContext {
+export interface SkillsContext {
   skills: {
     registerProvider(create: (control: unknown) => SkillProvider): unknown
   }

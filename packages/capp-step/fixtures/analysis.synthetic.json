@@ -1,0 +1,44 @@
+{
+  "schema_version": "synthetic-fixture",
+  "analyzed_at": "2026-01-01T00:00:00Z",
+  "source_part": { "name": "synthetic" },
+  "canonical_geometry": {
+    "body_bounds": [
+      { "xmin": -5.0, "xmax": 0.0, "ymin": -20.5, "ymax": 20.5, "zmin": -20.5, "zmax": 20.5 }
+    ]
+  },
+  "manufacturing_model": {
+    "turning": {
+      "status": "recognized",
+      "features": [
+        {
+          "feature_id": "MF_001",
+          "type": "external_cylindrical_surface",
+          "diameter": 41.0,
+          "radius": 20.5,
+          "length": 5.0
+        },
+        {
+          "feature_id": "MF_002",
+          "type": "internal_cylindrical_bore_segment",
+          "diameter": 30.0,
+          "radius": 15.0,
+          "length": 5.0
+        },
+        {
+          "feature_id": "MF_003",
+          "type": "positive_axis_end_face"
+        },
+        {
+          "feature_id": "MF_004",
+          "type": "mystery_nx_type"
+        }
+      ],
+      "feature_groups": [
+        { "feature_id": "MF_BORE_GROUP_001", "type": "stepped_through_bore", "diameter": 30.0 }
+      ]
+    }
+  },
+  "data_quality": {},
+  "diagnostics": []
+}

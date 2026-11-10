@@ -42,6 +42,8 @@
 // Entity_CH.h uses MFC's CArray without including afxtempl.h.
 template <class TYPE, class ARG_TYPE> class CArray;
 #include "Entity_CH.h"
+// operation_manager and the OPMGR_* command codes live here (interfaces\Mill).
+#include "AssocHok_CH.h"
 static_assert(C_H_VERSION == 2800, "param_probe targets the Mastercam 2026 SDK only");
 #endif
 

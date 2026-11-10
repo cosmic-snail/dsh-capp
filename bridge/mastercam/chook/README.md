@@ -37,7 +37,7 @@ msbuild CappParamProbe.vcxproj /p:Configuration=Release /p:Platform=x64 /p:Maste
 
 Output: `bin\CappParamProbe.dll` (`bin\`, `obj\`, `x64\` are gitignored). Check its exports with `dumpbin /exports bin\CappParamProbe.dll`: `m_main` and `m_version` must be listed.
 
-The header set and libraries are a first-compile guess. If the build reports an undeclared `operation`, `operation_manager`, `DB_LIST_ENT_PTR` or an `OPMGR_*` constant, find the header that declares it under the SDK's `interfaces\` tree, add its include to `param_probe.cpp`, and record which one in the G-MC run record. For an unresolved external, add the import library that defines it.
+The header set and libraries are a first-compile guess. First real build (2026-11-09, G-MC) needed two additions beyond the guess: `#include "AssocHok_CH.h"` in `param_probe.cpp` (declares `operation_manager` and the `OPMGR_*` codes, under `interfaces\Mill\`) and `$(MastercamSdkRoot)\NGP\Core\gaf\base\misc\h` in the project's include dirs (`UtArray.h` lives there). Point `MastercamSdkRoot` at a **complete** SDK extraction — a directory of stub headers builds nothing. For an unresolved external, add the import library that defines it.
 
 ## Run
 

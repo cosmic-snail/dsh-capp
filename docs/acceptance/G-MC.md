@@ -44,3 +44,13 @@ With steps 5–8 (execution plan, S-MC task 6), additionally: one lathe paramete
   - Operational findings recorded in `bridge/mastercam/README.md`: IPC add-in must be loaded in the UI first; a `.csx` compile error opens a modal that wedges the host until closed; script paths must not contain whitespace.
 - Not run: the C++ CHook — G-MC steps 5–8 are added by #9 and run there; `edit-regen` parameter write has no .NET path (recorded above).
 - Evidence kept locally (never committed): `out\count.json`, `out\open.json`, `out\post.json`, `out\access.json`, `out\nc1\T.NC` under the probe work dir; probe scripts under `probes\` in the same dir.
+
+### 2026-11-09 · pass (CHook steps 5–8)
+- Commit: `cb31dbd` plus the build fixes recorded below (branch `spike/s-mc-chook`)
+- Same Mastercam session and `torus-b.mcam` copy as the run above; `mill-turn-post` unchanged.
+- Build: `CappParamProbe.vcxproj` Release|x64 with MSBuild v143 + WinSDK 10.0.22621.0 → `bin\CappParamProbe.dll`; `dumpbin /exports` lists `m_main` and `m_version`. First build needed `#include "AssocHok_CH.h"` (`interfaces\Mill\`, declares `operation_manager`/`OPMGR_*`) and the `NGP\Core\gaf\base\misc\h` include dir (`UtArray.h`). `MastercamSdkRoot` pointed at a complete SDK extraction; a stub-header SDK tree fails on empty `UtArray.h`.
+- Step 6, read-only `chook-param.csx` on all 7 ids: every `receipt.json` `loaded:true, return_code:0, on_ui_thread:true`; every `result.json` `ok:true, steps:["read"]`. `before` values match the authoritative readback exactly — op 2 and op 4 (opcode 60) show `rough_step:0.5, stock_x:0.2, stock_z:0.1`; op 8 shows `clearance:5, depth:-5`.
+- Step 7: baseline post → `nc-base\T.NC` (1918 bytes). Write run `op_id=2, param=rough_step, value=0.4` → `ok:true`, `steps:["read","rewrite","readback","flag","regen"]`, `dirty_after_flag:true`, `dirty_after_regen:false`, `after_regen.rough_step:0.4`.
+- Step 8: post → `nc-after\T.NC` (1919 bytes); `fc /b` reports the files differ — the parameter change reached the posted NC. Neither NC committed.
+- The write ran on the disposable `torus-b.mcam` copy (now holds `rough_step:0.4`); the asset original was never opened for writing.
+- Evidence kept locally (never committed): `chook-out\op*-readonly\{receipt,result}.json`, `chook-out\op2-write\{receipt,result}.json`, `out\nc-base\T.NC`, `out\nc-after\T.NC`, request files under `chook-req\`, build log under the chook work dir.

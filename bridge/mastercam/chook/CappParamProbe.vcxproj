@@ -37,7 +37,7 @@
       <WarningLevel>Level3</WarningLevel>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
       <PreprocessorDefinitions>NOMINMAX;UNICODE;_UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(MastercamSdkRoot);$(MastercamSdkRoot)\interfaces;$(MastercamSdkRoot)\interfaces\systypes;$(MastercamSdkRoot)\interfaces\Core;$(MastercamSdkRoot)\interfaces\CoreBase;$(MastercamSdkRoot)\interfaces\Database;$(MastercamSdkRoot)\interfaces\Math;$(MastercamSdkRoot)\interfaces\Mill;$(MastercamSdkRoot)\interfaces\GUI;$(MastercamSdkRoot)\interfaces\Graphics;$(MastercamSdkRoot)\NGP\Core\h;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildProjectDirectory);$(MastercamSdkRoot);$(MastercamSdkRoot)\interfaces;$(MastercamSdkRoot)\interfaces\systypes;$(MastercamSdkRoot)\interfaces\Core;$(MastercamSdkRoot)\interfaces\CoreBase;$(MastercamSdkRoot)\interfaces\Database;$(MastercamSdkRoot)\interfaces\Math;$(MastercamSdkRoot)\interfaces\Mill;$(MastercamSdkRoot)\interfaces\GUI;$(MastercamSdkRoot)\interfaces\Graphics;$(MastercamSdkRoot)\NGP\Core\gaf\base\misc\h;$(MastercamSdkRoot)\NGP\Core\h;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(MastercamSdkRoot)\x64\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

@@ -1,0 +1,28 @@
+{
+  "schema": "capp.template/v0",
+  "id": "toy",
+  "version": "1.0.0",
+  "applies_to": { "features": ["cylinder_outer"] },
+  "operations": [
+    {
+      "id": "op1",
+      "type": "face",
+      "name": "Face front",
+      "cam": { "mcam_op": 1 },
+      "params": { "feed": -0.3, "rpm": 295 }
+    },
+    {
+      "id": "op2",
+      "type": "rough_turn",
+      "name": "Rough OD",
+      "cam": { "mcam_op": 2 },
+      "params": { "feed": -0.3, "rpm": 295, "rough_step": 0.5 }
+    }
+  ],
+  "rules": {
+    "feed": { "editable": true },
+    "rpm": { "editable": true },
+    "rough_step": { "editable": true, "min": 0.1, "max": 1.0, "step": 0.1 }
+  },
+  "mcam": "torus-mcam"
+}

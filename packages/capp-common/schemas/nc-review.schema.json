@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "capp.nc-review/v0",
+  "type": "object",
+  "required": ["schema", "run", "nc_sha256", "decision", "decided_at"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "const": "capp.nc-review/v0" },
+    "run": { "type": "string" },
+    "nc_sha256": { "type": "string" },
+    "decision": { "enum": ["approved", "rejected"] },
+    "note": { "type": "string" },
+    "decided_at": { "type": "string" }
+  }
+}

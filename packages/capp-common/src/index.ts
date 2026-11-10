@@ -1,5 +1,11 @@
-// __CAPP_VERSION__ is injected by scripts/build.mjs (esbuild define) with the
-// building package's version, so capp-common never hardcodes a version that can drift.
-declare const __CAPP_VERSION__: string
-
-export const CAPP_VERSION = __CAPP_VERSION__
+export { CAPP_VERSION } from './version'
+export { CappError } from './errors'
+export { inside, exists } from './paths'
+export * from './types'
+export { readDoc, validateDoc, writeDoc } from './docs'
+export { createJob, openJob, listJobs, dshHome, jobsIndexPath } from './jobs'
+export type { Job, JobIndexEntry } from './jobs'
+export { cappLogger, cappTool } from './tool'
+export type { HostLogger, Logger, ToolExec } from './tool'
+export { registerSkills } from './skills'
+export type { SkillEntry, SkillProviderInfo } from './skills'

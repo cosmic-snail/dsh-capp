@@ -1,0 +1,13 @@
+{
+  "schema": "capp.part/v0",
+  "source": { "file": "input/toy.step", "sha256": "0000000000000000000000000000000000000000000000000000000000000001" },
+  "units": "mm",
+  "bbox": { "min": [0, 0, 0], "max": [50, 50, 30] },
+  "features": [
+    { "id": "f1", "type": "cylinder_outer", "params": { "diameter": 40, "length": 30 } },
+    { "id": "f2", "type": "plane_face", "params": {} }
+  ],
+  "material": null,
+  "raw": ["nx/extractor-report.json"],
+  "warnings": []
+}

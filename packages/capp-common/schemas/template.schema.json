@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "capp.template/v0",
+  "type": "object",
+  "required": ["schema", "id", "version", "applies_to", "operations", "rules"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "const": "capp.template/v0" },
+    "id": { "type": "string" },
+    "version": { "type": "string" },
+    "applies_to": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "features": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string" },
+          "name": { "type": "string" },
+          "cam": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": { "mcam_op": { "type": "integer" } }
+          },
+          "params": { "type": "object", "additionalProperties": true }
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "min": { "type": "number" },
+          "max": { "type": "number" },
+          "step": { "type": "number" },
+          "editable": { "type": "boolean" }
+        }
+      }
+    },
+    "mcam": { "type": "string" }
+  }
+}

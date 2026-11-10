@@ -89,7 +89,7 @@ All files for one job live in `<session workspace>/capp/<job-id>/`. A job is one
 
 ## 6. File formats (v0)
 
-Every file carries `"schema": "capp.<name>/v0"`. Only the fields below are required, and extra fields are allowed and preserved. Paths inside files are relative to the job directory.
+Every file carries `"schema": "capp.<name>/v0"`. Each schema's `required` list is authoritative — fields it omits are optional — and extra fields are allowed and preserved. `cam-request`/`cam-status` live in `cam/run-<k>/` and need an explicit path in `readDoc`/`writeDoc`. Paths inside files are relative to the job directory.
 
 ### 6.1 `part.json` (`capp.part/v0`)
 

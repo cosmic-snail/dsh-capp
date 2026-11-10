@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "capp.approval/v0",
+  "type": "object",
+  "required": ["schema", "plan", "approved_at"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "const": "capp.approval/v0" },
+    "plan": {
+      "type": "object",
+      "required": ["revision", "sha256"],
+      "additionalProperties": true,
+      "properties": {
+        "revision": { "type": "integer" },
+        "sha256": { "type": "string" }
+      }
+    },
+    "approved_at": { "type": "string" },
+    "note": { "type": "string" }
+  }
+}

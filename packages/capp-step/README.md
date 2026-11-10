@@ -35,3 +35,25 @@ cd /d <work-dir>
 - `analysis.json`: `analysis_contract`, `analyzed_at`, `canonical_geometry`, `coordinate_registry`, `data_quality`, `diagnostics`, `manufacturing_model`, `requirements_and_context_status`, `schema_version`, `source_part`, `source_revision_state`, `source_schema_version`, `topology_graph`.
 
 Both JSON files stay in the session workspace on the Windows machine; they are never committed ([assets](../../docs/assets.md)).
+
+## Plugin (S2)
+
+`step_parse({ step_path, job_id? })` parses a STEP file into `capp/<job>/part.json` (`capp.part/v0`). `step_path` is relative to the session workspace; the STEP is copied to `input/`, the NX journal + analyzer write `nx/nx-report.json`, `nx/analysis.json` and `nx/nx.log`, and `normalize.ts` maps the reports to the open feature vocabulary — unmapped items become `warnings`, never blocks.
+
+### Config (cordis.patch / plugin config)
+
+| Key | Meaning |
+|---|---|
+| `nxRoot` | NX install root; fallback for `UGII_BASE_DIR` |
+| `extractorScripts.extractor` | absolute path to the nx-extractor script (sha256-pinned contract with `journal.py.tpl`) |
+| `extractorScripts.analyzer` | absolute path to `deterministic_geometry_manufacturing_analyzer.py` |
+| `stepSettings` | absolute path to `step214ug.def` (`nx-step-settings` asset) |
+| `journalRunner` | absolute path to `run_journal.exe` |
+| `pythonPath` | absolute path to a Python 3 interpreter for the analyzer (not the PATH `python` — it is a broken WindowsApps alias on the test machine) |
+| `timeoutMs` | journal+analyzer budget, default 600000; the tool timeout is this +30s |
+
+Machine paths live only in local plugin config, never in the repo ([assets](../../docs/assets.md)).
+
+### Environment
+
+`env.ts` starts from `process.env`; a missing `UGII_BASE_DIR`/`UGII_LANG`/`SPLM_LICENSE_SERVER`/`UGS_LICENSE_BUNDLE` is read from the registry (`reg query …\Environment /v NAME`) via `ctx.subprocess`, `UGII_BASE_DIR` falls back to `nxRoot`, and anything still missing throws a `CappError` naming it. Whether the Harness sandbox lets these subprocesses run and write into the job dir is the S-PERM question — see spec §8 and `docs/acceptance/G2.md`.

@@ -7,8 +7,8 @@ Baseline: design, spec, asset boundary and the development pipeline (docs check,
 | Step | State on `main` | Gate | Evidence |
 |---|---|---|---|
 | S0 Skeleton | Done | G0 passed | [G0](acceptance/G0.md) 2026-11-09, commit `4d7d37d` |
-| S-MC Mastercam pipe spike | Not started | G-MC not run | none |
-| S-NX NX batch spike | Not started | G-NX not run | none |
+| S-MC Mastercam pipe spike | Done | G-MC passed | [G-MC](acceptance/G-MC.md) 2026-11-09 |
+| S-NX NX batch spike | Done | G-NX passed | [G-NX](acceptance/G-NX.md) 2026-11-09 |
 | S1 Common | Not started | G1 not run | none |
 | S2 Step | Not started | G2 not run | none |
 | S3 Planning (mode A) | Not started | G3 not run | none |

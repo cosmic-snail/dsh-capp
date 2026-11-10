@@ -2,7 +2,7 @@
 
 Describes `main` only. Unmerged work lives in its PR. Update a row when its step merges or its gate result changes; dated evidence goes in [acceptance/](acceptance/README.md). Steps and gates are defined in [spec §7](spec.md#7-implementation-plan-and-acceptance-gates).
 
-Baseline: design, spec, asset boundary, the development pipeline and S0–S1 (`capp-common` contracts). S-MC and S-NX spikes are done: the Mastercam pipe/CHook path and the NX batch path are both verified on the Windows machine (G-MC, G-NX).
+Baseline: design, spec, asset boundary, the development pipeline and S0. S-MC and S-NX spikes are done: the Mastercam pipe/CHook path and the NX batch path are both verified on the Windows machine (G-MC, G-NX).
 
 | Step | State on `main` | Gate | Evidence |
 |---|---|---|---|

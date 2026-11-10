@@ -391,6 +391,7 @@ Rules for every step:
 | ID | Question | Decided in |
 |---|---|---|
 | S-MC | **Decided:** C# over the pipe covers count/open/post, but lathe operation parameters are unreachable from .NET — a C++ CHook is required for set-params and regen. Verdict and API details: `bridge/mastercam/README.md`, G-MC | S-MC |
+| S-MC-STEP | `rough_step` via `u.prm_lrgh.step` writes/regens/reads back but produced no NC diff at 0.4 **or** 0.25 on the torus part/post (header-only `fc /n`), while `feed` and `stock_x` verifiably reach the NC — field mapping or geometry insensitivity unresolved. The MVP demo revision "rough_step 0.5→0.4" (design §10, G3/G5) depends on this; S5's first task is to resolve it and adjust the demo value or field | S5 |
 | S-NX | **Decided:** `run_journal.exe <journal.py>` is the batch entry; it needs `UGII_BASE_DIR`, `UGII_LANG`, `SPLM_LICENSE_SERVER` (system env on the Windows machine); `UGS_LICENSE_BUNDLE` not required. Verdict and command line: `packages/capp-step/README.md`, G-NX | S-NX |
 | S-JOBS | Use the host `jobs` service (`@deepseek-ai/dsh-jobs`) for CAM runs instead of our runner | During S5, only if it simplifies; the default is our runner |
 | S-WS | Can the client get the current session workspace from host APIs? If yes, the panel filters jobs by workspace; if no, the global index stays | S4 |

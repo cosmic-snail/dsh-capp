@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "capp.cam-request/v0",
+  "type": "object",
+  "required": ["schema", "plan", "template_mcam", "post", "operations", "steps"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "const": "capp.cam-request/v0" },
+    "plan": {
+      "type": "object",
+      "required": ["revision", "sha256"],
+      "additionalProperties": true,
+      "properties": {
+        "revision": { "type": "integer" },
+        "sha256": { "type": "string" }
+      }
+    },
+    "template_mcam": { "type": "string" },
+    "post": { "type": "string" },
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["mcam_op"],
+        "additionalProperties": true,
+        "properties": {
+          "mcam_op": { "type": "integer" },
+          "params": { "type": "object", "additionalProperties": true }
+        }
+      }
+    },
+    "steps": { "type": "array", "items": { "type": "string" } },
+    "simulate": {}
+  }
+}

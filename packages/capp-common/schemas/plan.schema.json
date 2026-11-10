@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "capp.plan/v0",
+  "type": "object",
+  "required": ["schema", "revision", "part", "mode", "setups"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "const": "capp.plan/v0" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "part": {
+      "type": "object",
+      "required": ["file", "sha256"],
+      "additionalProperties": true,
+      "properties": {
+        "file": { "type": "string" },
+        "sha256": { "type": "string" }
+      }
+    },
+    "mode": { "enum": ["template", "freeform"] },
+    "template": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "id": { "type": "string" },
+        "version": { "type": "string" }
+      }
+    },
+    "stock": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "material": { "type": "string" },
+        "shape": { "type": "string" },
+        "dims": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "setups": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "operations"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string" },
+          "operations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "seq", "type"],
+              "additionalProperties": true,
+              "properties": {
+                "id": { "type": "string" },
+                "seq": { "type": "integer" },
+                "type": { "type": "string" },
+                "name": { "type": "string" },
+                "features": { "type": "array", "items": { "type": "string" } },
+                "tool": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "id": { "type": "string" },
+                    "desc": { "type": "string" }
+                  }
+                },
+                "params": { "type": "object", "additionalProperties": true },
+                "cam": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": { "mcam_op": { "type": "integer" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "notes": { "type": "string" },
+    "changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "revision": { "type": "integer" },
+          "by": { "type": "string" },
+          "summary": { "type": "string" }
+        }
+      }
+    }
+  }
+}

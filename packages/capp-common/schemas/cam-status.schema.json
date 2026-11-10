@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "capp.cam-status/v0",
+  "type": "object",
+  "required": ["schema", "state"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "const": "capp.cam-status/v0" },
+    "state": { "enum": ["queued", "running", "succeeded", "failed"] },
+    "step": { "type": "string" },
+    "started_at": { "type": "string" },
+    "finished_at": { "type": ["string", "null"] },
+    "nc": { "type": ["string", "null"] },
+    "error": {
+      "type": ["object", "null"],
+      "additionalProperties": true,
+      "properties": {
+        "message": { "type": "string" },
+        "log": { "type": "string" }
+      }
+    }
+  }
+}

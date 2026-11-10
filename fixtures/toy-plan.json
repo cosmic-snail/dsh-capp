@@ -1,0 +1,37 @@
+{
+  "schema": "capp.plan/v0",
+  "revision": 1,
+  "part": { "file": "part.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000002" },
+  "mode": "template",
+  "template": { "id": "toy", "version": "1.0.0" },
+  "stock": { "material": "2024-Al", "shape": "bar", "dims": { "diameter": 50, "length": 35 } },
+  "setups": [
+    {
+      "id": "s1",
+      "operations": [
+        {
+          "id": "op1",
+          "seq": 1,
+          "type": "face",
+          "name": "Face front",
+          "features": ["f2"],
+          "tool": { "id": "T0101", "desc": "CNMG 80" },
+          "params": { "feed": -0.3, "spindle_rpm": 295 },
+          "cam": { "mcam_op": 1 }
+        },
+        {
+          "id": "op2",
+          "seq": 2,
+          "type": "rough_turn",
+          "name": "Rough OD",
+          "features": ["f1"],
+          "tool": { "id": "T0101", "desc": "CNMG 80" },
+          "params": { "feed": -0.3, "spindle_rpm": 295, "rough_step": 0.5 },
+          "cam": { "mcam_op": 2 }
+        }
+      ]
+    }
+  ],
+  "notes": "synthetic fixture",
+  "changes": [{ "revision": 1, "by": "agent", "summary": "created from template" }]
+}

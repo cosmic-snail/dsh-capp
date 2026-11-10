@@ -5,5 +5,14 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "ajv": "8.17.1"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-tools": "0.2.2-alpha.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh-tools": "0.2.2-alpha.2"
   }
 }

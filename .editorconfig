@@ -15,5 +15,5 @@ trim_trailing_whitespace = false
 [*.{cmd,bat}]
 end_of_line = crlf
 
-[*.{cs,csx,tpl}]
+[*.{cs,csx,tpl,cpp,hpp,h}]
 indent_size = 4

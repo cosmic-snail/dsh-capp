@@ -33,15 +33,27 @@ export async function inside(root: string, rel: string): Promise<string> {
       ancestor = parent
     }
   }
-  const rootReal = await realpath(rootAbs)
-  let ancestorReal: string
-  try {
-    ancestorReal = await realpath(ancestor)
-  } catch {
-    // A dangling symlink as the nearest ancestor would let a later write
-    // follow it outside the root; refuse rather than guess its target.
-    throw new CappError(`path has a dangling symlink inside job root: ${rel}`)
+  // Canonicalize for the escape check. A symlink must resolve — a dangling
+  // one is refused. A non-symlink that realpath can't handle (e.g. an 8.3
+  // alias on a volume where realpath fails) falls back to the lexical path:
+  // it cannot redirect anywhere, so the comparison stays sound.
+  const canon = async (p: string, danglingRel: string): Promise<string> => {
+    const lst = await lstat(p).catch(() => undefined)
+    if (lst?.isSymbolicLink()) {
+      try {
+        return await realpath(p)
+      } catch {
+        throw new CappError(`path has a dangling symlink inside job root: ${danglingRel}`)
+      }
+    }
+    try {
+      return await realpath(p)
+    } catch {
+      return resolve(p)
+    }
   }
+  const rootReal = await canon(rootAbs, rel)
+  const ancestorReal = await canon(ancestor, rel)
   const resolved = [ancestorReal, ...tail].join(sep)
   if (resolved !== rootReal && !resolved.startsWith(rootReal + sep)) {
     throw new CappError(`path escapes job root via symlink: ${rel}`)

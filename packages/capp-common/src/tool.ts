@@ -36,7 +36,8 @@ export function cappLogger(logger: HostLogger, plugin: string): Logger {
         .join(' ')
       const line = `capp-${plugin}: ${event}${pairs ? `; ${pairs}` : ''}`
       const fn = level === 'warn' ? logger.warn?.bind(logger) ?? logger.info.bind(logger) : logger[level].bind(logger)
-      fn(line)
+      // Host logger is printf-style: pass the line as an argument, not the format.
+      fn('%s', line)
     }
   return { info: emit('info'), warn: emit('warn'), error: emit('error') }
 }
@@ -73,7 +74,7 @@ export function cappTool<A, R>(spec: {
           throw new CappError(e.log ? `${e.message} (log: ${e.log})` : e.message, e.log)
         }
         const err = e instanceof Error ? e : new Error(String(e))
-        log.error?.(`${spec.name} internal_error`, { duration_ms: duration, error: err.message, stack: err.stack ?? '' })
+        log.error(`${spec.name} internal_error`, { duration_ms: duration, error: err.message, stack: err.stack ?? '' })
         throw new CappError(`Internal error in ${spec.name}: ${err.message}`)
       }
     },

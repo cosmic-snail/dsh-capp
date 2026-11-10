@@ -67,13 +67,14 @@ function newJobId(now = new Date()): string {
 
 export async function createJob(workspaceRoot: string, label?: string): Promise<Job> {
   const id = newJobId()
+  // Read the index first: a failed read must not leave an orphan job dir.
+  const index = await readIndex()
   const cappDir = await inside(workspaceRoot, 'capp')
   await mkdir(cappDir, { recursive: true })
   const dir = join(cappDir, id)
   // Non-recursive: an id collision fails loudly instead of reusing a directory.
   await mkdir(dir)
   const now = new Date().toISOString()
-  const index = await readIndex()
   index.jobs = index.jobs.filter((j) => j.id !== id)
   index.jobs.push({ id, dir, label, created_at: now, updated_at: now })
   await writeIndex(index)

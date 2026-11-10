@@ -1,34 +1,24 @@
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import { BUNDLED_SKILL_RANK } from '@deepseek-ai/dsh-skill'
+import type { SkillCandidate, SkillDefinition, SkillProvider } from '@deepseek-ai/dsh-skill'
 
 // Follows the host image plugin's shape (plan §1 host facts): one provider per
 // plugin; each skill is a bundled candidate whose `get` returns the SKILL.md
-// content with frontmatter stripped.
+// content with frontmatter stripped. Types come from @deepseek-ai/dsh-skill.
 
 export interface SkillEntry {
   name: string
   description: string
 }
 
-export interface SkillProvider {
+export interface SkillProviderInfo {
   name: string
-}
-
-interface SkillCandidate {
-  name: string
-  description: string
-  invocation: { modelInvocable: boolean; userInvocable: boolean }
-  provider: string
-  source: 'bundled'
-  rank: number
-  locator: URL
-  resourceBase: { kind: 'directory'; path: string }
 }
 
 interface SkillsContext {
   skills: {
-    registerProvider(provider: () => { name: string; list: () => Promise<SkillCandidate[]>; get: (selected: SkillCandidate) => Promise<(SkillCandidate & { content: string }) | undefined> }): unknown
+    registerProvider(create: (control: unknown) => SkillProvider): unknown
   }
 }
 
@@ -36,7 +26,7 @@ const FRONTMATTER = /^---\r?\n[\s\S]*?\r?\n---\r?\n/u
 
 export function registerSkills(
   ctx: SkillsContext,
-  provider: SkillProvider,
+  provider: SkillProviderInfo,
   dirUrl: string,
   skills: SkillEntry[],
 ): void {
@@ -54,14 +44,15 @@ export function registerSkills(
       resourceBase: { kind: 'directory', path: fileURLToPath(new URL('.', locator)) },
     }
   })
-  ctx.skills.registerProvider(() => ({
+  const skillProvider: SkillProvider = {
     name: provider.name,
     list: async () => candidates,
-    get: async (selected) => {
+    get: async (selected: SkillCandidate): Promise<SkillDefinition | undefined> => {
       const hit = candidates.find((c) => c.name === selected.name)
       if (!hit) return undefined
-      const content = (await readFile(hit.locator, 'utf8')).replace(FRONTMATTER, '').trim()
-      return { ...hit, content }
+      const content = (await readFile(hit.locator as URL, 'utf8')).replace(FRONTMATTER, '').trim()
+      return { ...hit, content } as SkillDefinition
     },
-  }))
+  }
+  ctx.skills.registerProvider(() => skillProvider)
 }

@@ -1,10 +1,9 @@
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { CappError } from '../src/errors'
 import { readDoc, writeDoc } from '../src/docs'
-import { createJob } from '../src/jobs'
 import type { Part, Plan } from '../src/types'
 
 const FIXTURES = join(__dirname, '..', '..', '..', 'fixtures')
@@ -14,8 +13,8 @@ let jobDir: string
 
 beforeAll(async () => {
   workspace = await mkdtemp(join(tmpdir(), 'capp-s1-'))
-  const job = await createJob(workspace, 'docs-test')
-  jobDir = job.dir
+  jobDir = join(workspace, 'job-test')
+  await mkdir(jobDir, { recursive: true })
   process.env.DSH_HOME = join(workspace, 'dsh-home')
 })
 

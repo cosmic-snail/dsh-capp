@@ -61,9 +61,17 @@ describe('cappTool error mapping', () => {
 describe('cappLogger', () => {
   it('formats capp-<plugin>: <event>; key=value through the host logger', () => {
     const seen: string[] = []
-    const host = { info: (m: string) => seen.push(m), error: (m: string) => seen.push(m) }
+    // Host logger is printf-style: substitute %s like cordis LoggerMethod does.
+    const printf = (m: string, ...args: unknown[]) => {
+      let i = 0
+      seen.push(m.replace(/%[sdifoOcC]/g, () => String(args[i++])))
+    }
+    const host = { info: printf, error: printf }
     const log = cappLogger(host, 'step')
     log.info('step_parse ok', { duration_ms: 12, job_id: 'job-1' })
     expect(seen[0]).toBe('capp-step: step_parse ok; duration_ms=12 job_id=job-1')
+    // A message containing %d must not be eaten as a placeholder.
+    log.error('step_parse failed', { error: '100% done %d' })
+    expect(seen[1]).toContain('100% done %d')
   })
 })

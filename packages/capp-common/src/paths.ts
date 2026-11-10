@@ -1,5 +1,5 @@
-import { realpath, stat } from 'node:fs/promises'
-import { dirname, isAbsolute, resolve, sep } from 'node:path'
+import { lstat, realpath, stat } from 'node:fs/promises'
+import { basename, dirname, isAbsolute, resolve, sep } from 'node:path'
 import { CappError } from './errors'
 
 // inside(root, rel) resolves rel under root and rejects escapes (guardrail G4):
@@ -17,23 +17,31 @@ export async function inside(root: string, rel: string): Promise<string> {
   }
 
   // realpath the nearest existing ancestor, then re-append the missing tail —
-  // a symlinked directory can't smuggle a new file outside the root.
+  // a symlinked directory can't smuggle a new file outside the root. lstat (not
+  // stat) so a dangling symlink still counts as "existing" and gets resolved.
   let ancestor = target
   const tail: string[] = []
   for (;;) {
     try {
-      await stat(ancestor)
+      await lstat(ancestor)
       break
     } catch (e) {
       if ((e as NodeJS.ErrnoException).code !== 'ENOENT') throw e
       const parent = dirname(ancestor)
       if (parent === ancestor) break
-      tail.unshift(ancestor.slice(parent.length + 1))
+      tail.unshift(basename(ancestor))
       ancestor = parent
     }
   }
   const rootReal = await realpath(rootAbs)
-  const ancestorReal = await realpath(ancestor)
+  let ancestorReal: string
+  try {
+    ancestorReal = await realpath(ancestor)
+  } catch {
+    // A dangling symlink as the nearest ancestor would let a later write
+    // follow it outside the root; refuse rather than guess its target.
+    throw new CappError(`path has a dangling symlink inside job root: ${rel}`)
+  }
   const resolved = [ancestorReal, ...tail].join(sep)
   if (resolved !== rootReal && !resolved.startsWith(rootReal + sep)) {
     throw new CappError(`path escapes job root via symlink: ${rel}`)

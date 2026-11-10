@@ -104,7 +104,8 @@ npm names are the folder names: `capp-common`, `capp-step`, `capp-planning`, `ca
     "@deepseek-ai/schemastery": "3.18.6-alpha.1",
     "@deepseek-ai/dsh-tools": "0.2.2-alpha.2",
     "@deepseek-ai/dsh-skill": "0.2.2-alpha.2",
-    "@deepseek-ai/dsh-sandbox": "0.2.2-alpha.2"
+    "@deepseek-ai/dsh-sandbox": "0.2.2-alpha.2",
+    "@deepseek-ai/dsh-home-paths": "0.2.2-alpha.2"
   },
   "devDependencies": { "capp-common": "workspace:*" }
 }

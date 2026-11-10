@@ -2,14 +2,14 @@
 
 Describes `main` only. Unmerged work lives in its PR. Update a row when its step merges or its gate result changes; dated evidence goes in [acceptance/](acceptance/README.md). Steps and gates are defined in [spec §7](spec.md#7-implementation-plan-and-acceptance-gates).
 
-Baseline: design, spec, asset boundary, the development pipeline and S0. S-MC and S-NX spikes are done: the Mastercam pipe/CHook path and the NX batch path are both verified on the Windows machine (G-MC, G-NX).
+Baseline: design, spec, asset boundary, the development pipeline, S0 and S1 (`capp-common` contracts). S-MC and S-NX spikes are done: the Mastercam pipe/CHook path and the NX batch path are both verified on the Windows machine (G-MC, G-NX).
 
 | Step | State on `main` | Gate | Evidence |
 |---|---|---|---|
 | S0 Skeleton | Done | G0 passed | [G0](acceptance/G0.md) 2026-11-09, commit `4d7d37d` |
 | S-MC Mastercam pipe spike | Done | G-MC passed | [G-MC](acceptance/G-MC.md) 2026-11-09/10, commit `c9b7fb9` |
 | S-NX NX batch spike | Done | G-NX passed | [G-NX](acceptance/G-NX.md) 2026-11-09, commit `a91f775` |
-| S1 Common | Not started | G1 not run | none |
+| S1 Common | Done | G1 passed | [G1](acceptance/G1.md) 2026-11-10 |
 | S2 Step | Not started | G2 not run | none |
 | S3 Planning (mode A) | Not started | G3 not run | none |
 | S4 Workbench | Not started | G4 not run | none |

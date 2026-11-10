@@ -170,17 +170,18 @@ export function writeDoc<N extends DocName>(job: Job, name: N, doc: Docs[N], fil
 //   write = JSON.stringify(doc, null, 2) → <file>.tmp → rename. No locks.
 
 // paths.ts
-export function inside(root: string, rel: string): string       // resolves; throws if outside root
+export function inside(root: string, rel: string): Promise<string>   // resolves; throws CappError if outside root (incl. symlink escapes)
 
 // tool.ts — every CAPP tool goes through this
 export function cappTool<A, R>(spec: {
   name: `${'step' | 'plan' | 'cam' | 'nc'}_${string}`
   description: string
-  parameters: Record<string, unknown>   // dsh-tools parameter schema
+  parameters: ParameterSchemaSpec   // dsh-tools parameter schema
   timeoutMs: number
   concurrencySafe?: boolean
   run: (args: A, exec: ToolExec, log: Logger) => Promise<R>
-}): ReturnType<typeof defineTool>
+}, log: Logger): ReturnType<typeof defineTool>
+//   log comes from cappLogger(ctx.logger, '<plugin>') → `capp-<plugin>: <event>; key=value` (§6.1)
 //   adds: presentCall card, JSON render, error → `CappError` message + log path, one info log per call
 export class CappError extends Error { constructor(message: string, readonly log?: string) }
 ```

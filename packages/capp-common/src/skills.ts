@@ -1,7 +1,10 @@
-// registerSkills follows the host image plugin's pattern: a provider builds
-// SKILL.md content per skill name and the plugin registers them on the bus.
-// The exact ctx.skills API is confirmed when the first skill ships (S3/S6);
-// keep this thin so a host API change touches one file.
+import { readFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
+import { BUNDLED_SKILL_RANK } from '@deepseek-ai/dsh-skill'
+
+// Follows the host image plugin's shape (plan §1 host facts): one provider per
+// plugin; each skill is a bundled candidate whose `get` returns the SKILL.md
+// content with frontmatter stripped.
 
 export interface SkillEntry {
   name: string
@@ -9,15 +12,27 @@ export interface SkillEntry {
 }
 
 export interface SkillProvider {
-  skillDirUrl(name: string): string | undefined
+  name: string
+}
+
+interface SkillCandidate {
+  name: string
+  description: string
+  invocation: { modelInvocable: boolean; userInvocable: boolean }
+  provider: string
+  source: 'bundled'
+  rank: number
+  locator: URL
+  resourceBase: { kind: 'directory'; path: string }
 }
 
 interface SkillsContext {
-  skills?: {
-    register(entry: { name: string; description: string; source: string }): unknown
+  skills: {
+    registerProvider(provider: () => { name: string; list: () => Promise<SkillCandidate[]>; get: (selected: SkillCandidate) => Promise<(SkillCandidate & { content: string }) | undefined> }): unknown
   }
-  [key: string]: unknown
 }
+
+const FRONTMATTER = /^---\r?\n[\s\S]*?\r?\n---\r?\n/u
 
 export function registerSkills(
   ctx: SkillsContext,
@@ -25,9 +40,28 @@ export function registerSkills(
   dirUrl: string,
   skills: SkillEntry[],
 ): void {
-  if (!ctx.skills?.register) return
-  for (const s of skills) {
-    const url = provider.skillDirUrl(s.name) ?? `${dirUrl.replace(/\/$/, '')}/${s.name}`
-    ctx.skills.register({ name: s.name, description: s.description, source: url })
-  }
+  const base = dirUrl.endsWith('/') ? dirUrl : `${dirUrl}/`
+  const candidates: SkillCandidate[] = skills.map((s) => {
+    const locator = new URL(`${s.name}/SKILL.md`, base)
+    return {
+      name: s.name,
+      description: s.description,
+      invocation: { modelInvocable: true, userInvocable: true },
+      provider: provider.name,
+      source: 'bundled',
+      rank: BUNDLED_SKILL_RANK,
+      locator,
+      resourceBase: { kind: 'directory', path: fileURLToPath(new URL('.', locator)) },
+    }
+  })
+  ctx.skills.registerProvider(() => ({
+    name: provider.name,
+    list: async () => candidates,
+    get: async (selected) => {
+      const hit = candidates.find((c) => c.name === selected.name)
+      if (!hit) return undefined
+      const content = (await readFile(hit.locator, 'utf8')).replace(FRONTMATTER, '').trim()
+      return { ...hit, content }
+    },
+  }))
 }

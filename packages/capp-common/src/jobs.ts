@@ -1,12 +1,13 @@
 import { randomBytes } from 'node:crypto'
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
-import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { mkdir, readFile, rename, stat, writeFile } from 'node:fs/promises'
+import { dirname, join } from 'node:path'
+import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 import { CappError } from './errors'
 import { inside } from './paths'
 
-// Jobs live in the session workspace; a global index under DSH_HOME maps
-// job id → absolute dir (spec A4). The index has no lock: last writer wins.
+// Jobs live in the session workspace under capp/<job-id>/; a global index at
+// <DSH_HOME>/capp/jobs.json maps job id → absolute dir (spec A4, design §5).
+// The index has no lock: last writer wins.
 
 export interface Job {
   id: string
@@ -25,10 +26,8 @@ interface JobIndex {
   jobs: JobIndexEntry[]
 }
 
-// DSH_HOME resolution: the host exposes it to plugins; process.env.DSH_HOME is
-// the fallback used by headless/CLI runs. Verified against the host in S2/S4.
 export function dshHome(): string {
-  return process.env.DSH_HOME ?? join(homedir(), '.dsh')
+  return resolveDshHome()
 }
 
 export function jobsIndexPath(): string {
@@ -36,19 +35,26 @@ export function jobsIndexPath(): string {
 }
 
 async function readIndex(): Promise<JobIndex> {
+  const path = jobsIndexPath()
+  let text: string
   try {
-    const text = await readFile(jobsIndexPath(), 'utf8')
+    text = await readFile(path, 'utf8')
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code === 'ENOENT') return { jobs: [] }
+    throw new CappError(`jobs index ${path} is not readable: ${(e as Error).message}`)
+  }
+  try {
     const data = JSON.parse(text) as JobIndex
-    if (!Array.isArray(data.jobs)) return { jobs: [] }
+    if (!Array.isArray(data.jobs)) throw new Error('missing jobs array')
     return data
-  } catch {
-    return { jobs: [] }
+  } catch (e) {
+    throw new CappError(`jobs index ${path} is not valid JSON: ${(e as Error).message}`)
   }
 }
 
 async function writeIndex(index: JobIndex): Promise<void> {
   const path = jobsIndexPath()
-  await mkdir(join(dshHome(), 'capp'), { recursive: true })
+  await mkdir(dirname(path), { recursive: true })
   const tmp = `${path}.tmp`
   await writeFile(tmp, JSON.stringify(index, null, 2) + '\n', 'utf8')
   await rename(tmp, path)
@@ -61,8 +67,11 @@ function newJobId(now = new Date()): string {
 
 export async function createJob(workspaceRoot: string, label?: string): Promise<Job> {
   const id = newJobId()
-  const dir = await inside(workspaceRoot, id)
-  await mkdir(dir, { recursive: true })
+  const cappDir = await inside(workspaceRoot, 'capp')
+  await mkdir(cappDir, { recursive: true })
+  const dir = join(cappDir, id)
+  // Non-recursive: an id collision fails loudly instead of reusing a directory.
+  await mkdir(dir)
   const now = new Date().toISOString()
   const index = await readIndex()
   index.jobs = index.jobs.filter((j) => j.id !== id)
@@ -79,7 +88,6 @@ export async function openJob(id: string): Promise<Job> {
   const entry = index.jobs.find((j) => j.id === id)
   if (!entry) throw new CappError(`job not found: ${id}`)
   try {
-    const { stat } = await import('node:fs/promises')
     await stat(entry.dir)
   } catch {
     throw new CappError(`job directory missing: ${entry.dir}`)

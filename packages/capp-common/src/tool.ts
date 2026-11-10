@@ -6,22 +6,39 @@ import { CappError } from './errors'
 // a declared dep); used only to satisfy defineTool's output contract.
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue }
 
-// cappTool wraps defineTool for every CAPP tool (spec §4.1): generic execute
-// card, JSON result rendering, CappError passthrough with log path, internal
-// errors mapped to a one-line message, one info log per call.
+// cappTool wraps defineTool for every CAPP tool (spec §4.1/§6.1): generic
+// execute card, JSON result rendering, CappError passthrough with log path,
+// internal errors mapped to a one-line message and logged with their stack,
+// one structured log line per call via the plugin's ctx.logger.
 
 export type ToolExec = ToolRunContext
 
-export interface Logger {
-  info(message: string): void
-  error(message: string): void
+// Host logger shape: ctx.logger uses printf-style calls.
+export interface HostLogger {
+  info(message: string, ...args: unknown[]): void
+  warn?(message: string, ...args: unknown[]): void
+  error(message: string, ...args: unknown[]): void
 }
 
-// The host ToolRunContext carries no logger; plugin logs go to the process
-// console, which the Harness captures per plugin.
-const consoleLog: Logger = {
-  info: (m) => console.info(`[capp] ${m}`),
-  error: (m) => console.error(`[capp] ${m}`),
+export interface Logger {
+  info(event: string, fields?: Record<string, unknown>): void
+  warn?(event: string, fields?: Record<string, unknown>): void
+  error(event: string, fields?: Record<string, unknown>): void
+}
+
+// capp-<plugin>: <event>; key=value — spec §6.1.
+export function cappLogger(logger: HostLogger, plugin: string): Logger {
+  const emit =
+    (level: 'info' | 'warn' | 'error') =>
+    (event: string, fields: Record<string, unknown> = {}) => {
+      const pairs = Object.entries(fields)
+        .map(([k, v]) => `${k}=${typeof v === 'string' ? v : JSON.stringify(v)}`)
+        .join(' ')
+      const line = `capp-${plugin}: ${event}${pairs ? `; ${pairs}` : ''}`
+      const fn = level === 'warn' ? logger.warn?.bind(logger) ?? logger.info.bind(logger) : logger[level].bind(logger)
+      fn(line)
+    }
+  return { info: emit('info'), warn: emit('warn'), error: emit('error') }
 }
 
 export function cappTool<A, R>(spec: {
@@ -31,8 +48,7 @@ export function cappTool<A, R>(spec: {
   timeoutMs: number
   concurrencySafe?: boolean
   run: (args: A, exec: ToolExec, log: Logger) => Promise<R>
-}): ReturnType<typeof defineTool> {
-  const started = () => Date.now()
+}, log: Logger): ReturnType<typeof defineTool> {
   return defineTool({
     name: spec.name,
     description: spec.description,
@@ -45,21 +61,20 @@ export function cappTool<A, R>(spec: {
       render: (_args: unknown, value: unknown) => [{ type: 'text', text: JSON.stringify(value) }],
     },
     async execute(args: unknown, exec: ToolRunContext) {
-      const t0 = started()
-      const log = consoleLog
+      const t0 = Date.now()
       try {
         const result = await spec.run(args as A, exec, log)
-        log.info(`${spec.name} ok ${Date.now() - t0}ms`)
+        log.info(`${spec.name} ok`, { duration_ms: Date.now() - t0 })
         return result as Record<string, JsonValue>
       } catch (e) {
-        const ms = Date.now() - t0
+        const duration = Date.now() - t0
         if (e instanceof CappError) {
-          log.info(`${spec.name} error ${ms}ms: ${e.message}`)
+          log.info(`${spec.name} error`, { duration_ms: duration, error: e.message })
           throw new CappError(e.log ? `${e.message} (log: ${e.log})` : e.message, e.log)
         }
-        const message = e instanceof Error ? e.message : String(e)
-        log.error(`${spec.name} internal error ${ms}ms: ${message}`)
-        throw new CappError(`Internal error in ${spec.name}: ${message}`)
+        const err = e instanceof Error ? e : new Error(String(e))
+        log.error?.(`${spec.name} internal_error`, { duration_ms: duration, error: err.message, stack: err.stack ?? '' })
+        throw new CappError(`Internal error in ${spec.name}: ${err.message}`)
       }
     },
   })

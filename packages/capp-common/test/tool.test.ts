@@ -1,46 +1,69 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { CappError } from '../src/errors'
-import { cappTool } from '../src/tool'
+import { cappLogger, cappTool, type Logger } from '../src/tool'
 
-function makeTool(run: () => Promise<unknown>) {
-  return cappTool({
-    name: 'step_probe',
-    description: 'test tool',
-    parameters: {},
-    timeoutMs: 1000,
-    run: run as never,
-  })
+function fakeLog(): Logger & { lines: string[] } {
+  const lines: string[] = []
+  return {
+    lines,
+    info: (event, fields) => lines.push(`I:${event} ${JSON.stringify(fields ?? {})}`),
+    error: (event, fields) => lines.push(`E:${event} ${JSON.stringify(fields ?? {})}`),
+  }
+}
+
+function makeTool(run: () => Promise<unknown>, log: Logger) {
+  return cappTool(
+    {
+      name: 'step_probe',
+      description: 'test tool',
+      parameters: {},
+      timeoutMs: 1000,
+      run: run as never,
+    },
+    log,
+  )
 }
 
 function execOf(tool: unknown): (a: unknown, e: unknown) => Promise<unknown> {
   return (tool as { execute: (a: unknown, e: unknown) => Promise<unknown> }).execute.bind(tool)
 }
 
-afterEach(() => vi.restoreAllMocks())
-
 describe('cappTool error mapping', () => {
   it('passes CappError through with the log path appended', async () => {
-    vi.spyOn(console, 'info').mockImplementation(() => {})
+    const log = fakeLog()
     const tool = makeTool(async () => {
       throw new CappError('boom', '/tmp/log.txt')
-    })
+    }, log)
     await expect(execOf(tool)({}, {})).rejects.toThrow('boom (log: /tmp/log.txt)')
+    expect(log.lines.some((l) => l.includes('step_probe error'))).toBe(true)
   })
 
-  it('maps other errors to Internal error and logs the stack line', async () => {
-    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-    vi.spyOn(console, 'info').mockImplementation(() => {})
+  it('maps other errors to Internal error and logs the stack', async () => {
+    const log = fakeLog()
     const tool = makeTool(async () => {
       throw new Error('weird failure')
-    })
+    }, log)
     await expect(execOf(tool)({}, {})).rejects.toThrow('Internal error in step_probe: weird failure')
-    expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('step_probe internal error'))
+    const line = log.lines.find((l) => l.startsWith('E:step_probe internal_error'))
+    expect(line).toBeDefined()
+    expect(line).toContain('weird failure')
+    expect(line).toContain('stack')
   })
 
   it('returns the run result on success and logs one info line', async () => {
-    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {})
-    const tool = makeTool(async () => ({ ok: true }))
+    const log = fakeLog()
+    const tool = makeTool(async () => ({ ok: true }), log)
     await expect(execOf(tool)({}, {})).resolves.toEqual({ ok: true })
-    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('step_probe ok'))
+    expect(log.lines.filter((l) => l.startsWith('I:step_probe ok'))).toHaveLength(1)
+  })
+})
+
+describe('cappLogger', () => {
+  it('formats capp-<plugin>: <event>; key=value through the host logger', () => {
+    const seen: string[] = []
+    const host = { info: (m: string) => seen.push(m), error: (m: string) => seen.push(m) }
+    const log = cappLogger(host, 'step')
+    log.info('step_parse ok', { duration_ms: 12, job_id: 'job-1' })
+    expect(seen[0]).toBe('capp-step: step_parse ok; duration_ms=12 job_id=job-1')
   })
 })
